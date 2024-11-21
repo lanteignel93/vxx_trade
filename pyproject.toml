@@ -1,0 +1,23 @@
+[project]
+name = "vxx_trade"
+version = "0.0.1"
+authors = [
+  { name="Laurent Lanteigne", email="laurent.lanteigne@gmail.com" },
+]
+dependencies = [
+]
+description = "VXX Trading Strategy"
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+[tool.setuptools.package-data]
+vxx_trade = ["logging_configs/*.json", "data/*.parquet"]
+
+[project.scripts]
