@@ -1,4 +1,5 @@
 import copy
+import json
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
@@ -46,11 +47,14 @@ class DataGenerator(DataGeneratorParameters):
 
 
 def main():
-    df = pl.read_parquet(DATA_PATH / "vxx_spot.parquet")
-    df = compute_vxx_adjusted_price(df)
-    df = compute_vxx_ret(df)
-    df = compute_term_structure_vol(df)
-    print(df.select("vol_term_structure").describe())
+    # df = pl.read_parquet(DATA_PATH / "vxx_spot.parquet")
+    # df = compute_vxx_adjusted_price(df)
+    # df = compute_vxx_ret(df)
+    # df = compute_term_structure_vol(df)
+    # print(df.select("vol_term_structure").describe())
+    with open(Path(__file__).parent.resolve() / "json" / "data_generator.json") as f:
+        parameters = json.load(f)
+    data_parameters = DataGeneratorParameters(**parameters)
 
 
 def compute_vix_spread_ewma_zscore(df: pl.DataFrame, period: int = 21) -> pl.DataFrame:
