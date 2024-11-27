@@ -6,7 +6,9 @@ from pathlib import Path
 import numpy as np
 import polars as pl
 
-DATA_PATH = Path(__file__).parent.resolve() / "data"
+from vxx_trade import DATA_PATH
+
+# DATA_PATH = Path(__file__).parent.resolve() / "data"
 
 
 @dataclass
@@ -127,7 +129,7 @@ class DataGenerator(DataGeneratorParameters):
         )
 
 
-def main():
+def generate_data_for_strategy():
     df = pl.read_parquet(DATA_PATH / "vxx_spot.parquet")
     with open(Path(__file__).parent.resolve() / "json" / "data_generator.json") as f:
         parameters = json.load(f)
@@ -138,7 +140,10 @@ def main():
     df = data_generator()
     print(data_generator)
     print(df.tail())
+    print(df.columns)
+
+    return df
 
 
 if __name__ == "__main__":
-    main()
+    generate_data_for_strategy()
