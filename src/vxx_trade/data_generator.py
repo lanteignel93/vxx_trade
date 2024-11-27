@@ -17,6 +17,8 @@ class DataGeneratorParameters:
 
 
 class DataGenerator(DataGeneratorParameters):
+    _volatility_columns = ["vix_cp", "vol_ts", "vvix_cp"]
+
     def __init__(self, parameters: DataGeneratorParameters, df: pl.DataFrame):
         super().__init__(**asdict(parameters))
         self._df = df
@@ -45,75 +47,97 @@ class DataGenerator(DataGeneratorParameters):
     def df(self):
         return self._df
 
+    @df.setter
+    def df(self, df: pl.DataFrame):
+        self._df = df
+
+    def compute_trading_data(self) -> pl.DataFrame:
+        df = self.df
+        df = self.compute_vxx_adjusted_price(df=df)
+        df = self.compute_vxx_ret(df=df)
+        df = self.compute_term_structure_vol(df=df)
+
+        for vol_col in self._volatility_columns:
+            df = self.compute_variable_rank(df=df, column=vol_col)
+            df = self.compute_spread_ewma_zscore(df=df, column=vol_col)
+
+        self.df = df
+
+    def compute_vxx_adjusted_price(self, df: pl.DataFrame) -> pl.DataFrame:
+        min_adjustment = df.select(pl.min("adjustmentfactor")).to_numpy()[0][0]
+        return df.with_columns(
+            pl.col("adjustmentfactor").truediv(min_adjustment)
+        ).with_columns(
+            pl.col("closeprice").mul(pl.col("adjustmentfactor")).alias("adj_price"),
+        )
+
+    def compute_vxx_ret(self, df: pl.DataFrame) -> pl.DataFrame:
+        return df.with_columns(pl.col("adj_price").log().diff().alias("vxx_log_ret"))
+
+    def compute_spread_ewma_zscore(self, df: pl.DataFrame, column: str) -> pl.DataFrame:
+        df = self.compute_ewma(df=df, column=column)
+        df = df.with_columns(
+            (pl.col(f"{column}") - pl.col(f"{column}_ewma")).alias(
+                f"{column}_ewma_zscore"
+            )
+        )
+
+        df = df.with_columns(
+            pl.col(f"{column}_ewma_zscore")
+            / pl.col(f"{column}_ewma_zscore").rolling_std(
+                window_size=self.zscore_period
+            )
+        )
+
+        return df.with_columns(
+            pl.col(f"{column}_ewma_zscore")
+            .cut(np.arange(-2, 2.5, 0.5))
+            .alias(f"{column}_zscore_bucket")
+        )
+
+    def compute_variable_rank(self, df: pl.DataFrame, column: str) -> pl.DataFrame:
+        return df.with_columns(
+            (
+                (
+                    pl.col(column).rank(method="max", descending=True)
+                    / df.height
+                    * self.rank_bucket
+                )
+                .ceil()
+                .cast(pl.UInt32)
+                .alias(f"{column}_rank")
+            )
+        )
+
+    def compute_ewma(self, df: pl.DataFrame, column: str) -> pl.DataFrame:
+        return df.with_columns(
+            pl.col(column).ewm_mean(com=self.ewma_com).alias(f"{column}_ewma")
+        )
+
+    def compute_term_structure_vol(self, df: pl.DataFrame):
+        return df.with_columns(
+            pl.col("vix_cp").truediv(pl.col("vixm_cp")).alias("vol_ts")
+        )
+
+    def vxx_reverse_split_dates(self, df: pl.DataFrame) -> pl.DataFrame:
+        return (
+            df.with_columns(pl.col("adjustmentfactor").diff().abs().alias("adj_diff"))
+            .filter(pl.col("adj_diff").gt(0))
+            .select("date")
+        )
+
 
 def main():
-    # df = pl.read_parquet(DATA_PATH / "vxx_spot.parquet")
-    # df = compute_vxx_adjusted_price(df)
-    # df = compute_vxx_ret(df)
-    # df = compute_term_structure_vol(df)
-    # print(df.select("vol_term_structure").describe())
+    df = pl.read_parquet(DATA_PATH / "vxx_spot.parquet")
     with open(Path(__file__).parent.resolve() / "json" / "data_generator.json") as f:
         parameters = json.load(f)
     data_parameters = DataGeneratorParameters(**parameters)
 
-
-def compute_vix_spread_ewma_zscore(df: pl.DataFrame, period: int = 21) -> pl.DataFrame:
-    df = df.with_columns(
-        vix_spread_zscore=(
-            pl.col("vix_cp") - pl.col("vix_cp").rolling_mean(window_size=period)
-        )
-        / pl.col("vix_cp").rolling_std(window_size=period)
-    )
-
-    return df.with_columns(
-        pl.col("vix_spread_zscore")
-        .cut(np.arange(-2, 2.5, 0.5))
-        .alias("vix_zscore_bucket")
-    )
-
-
-def compute_variable_rank(
-    df: pl.DataFrame, column: str, rank: int = 10
-) -> pl.DataFrame:
-    return df.with_columns(
-        (
-            (pl.col(column).rank(method="max", descending=True) / df.height * rank)
-            .ceil()
-            .cast(pl.UInt32)
-            .alias(f"{column}_rank")
-        )
-    )
-
-
-def compute_ewma(df: pl.DataFrame, column: str, com: int) -> pl.DataFrame:
-    return df.with_columns(pl.col(column).ewm_mean(com=com).alias(f"{column}_ewma"))
-
-
-def compute_term_structure_vol(df: pl.DataFrame):
-    return df.with_columns(
-        pl.col("vix_cp").truediv(pl.col("vixm_cp")).alias("vol_term_structure")
-    )
-
-
-def compute_vxx_adjusted_price(df: pl.DataFrame) -> pl.DataFrame:
-    min_adjustment = df.select(pl.min("adjustmentfactor")).to_numpy()[0][0]
-    return df.with_columns(
-        pl.col("adjustmentfactor").truediv(min_adjustment)
-    ).with_columns(
-        pl.col("closeprice").mul(pl.col("adjustmentfactor")).alias("adj_price"),
-    )
-
-
-def vxx_reverse_split_dates(df: pl.DataFrame) -> pl.DataFrame:
-    return (
-        df.with_columns(pl.col("adjustmentfactor").diff().abs().alias("adj_diff"))
-        .filter(pl.col("adj_diff").gt(0))
-        .select("date")
-    )
-
-
-def compute_vxx_ret(df: pl.DataFrame) -> pl.DataFrame:
-    return df.with_columns(pl.col("adj_price").log().diff().alias("vxx_log_ret"))
+    data_generator = DataGenerator(parameters=data_parameters, df=df)
+    data_generator.compute_trading_data()
+    df = data_generator()
+    print(data_generator)
+    print(df.tail())
 
 
 if __name__ == "__main__":

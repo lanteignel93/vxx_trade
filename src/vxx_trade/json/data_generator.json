@@ -1,5 +1,5 @@
 {
-    "zscore_period": 21,
+    "zscore_period": 63,
     "rank_bucket": 10,
     "ewma_com": 21
 }
