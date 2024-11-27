@@ -6,7 +6,8 @@ authors = [
 ]
 dependencies = [
   "polars==1.14.0",
-  "numpy==2.1.3"
+  "numpy==2.1.3",
+  "scipy==1.14.1"
 ]
 description = "VXX Trading Strategy"
 readme = "README.md"
@@ -20,7 +21,7 @@ classifiers = [
 [tool.setuptools.packages.find]
 where = ["src"]
 [tool.setuptools.package-data]
-vxx_trade = ["logging_configs/*.json", "data/*.parquet"]
+vxx_trade = ["json/*.json", "data/*.parquet"]
 
 [project.scripts]
 generate_trading_data = "vxx_trade.data_generator:generate_data_for_strategy"

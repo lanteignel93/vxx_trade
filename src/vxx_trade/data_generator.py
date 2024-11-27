@@ -1,14 +1,11 @@
 import copy
 import json
 from dataclasses import asdict, dataclass
-from pathlib import Path
 
 import numpy as np
 import polars as pl
 
-from vxx_trade import DATA_PATH
-
-# DATA_PATH = Path(__file__).parent.resolve() / "data"
+from vxx_trade import DATA_PATH, JSON_PATH
 
 
 @dataclass
@@ -129,18 +126,19 @@ class DataGenerator(DataGeneratorParameters):
         )
 
 
-def generate_data_for_strategy():
+def generate_data_for_strategy(verbose: bool = True):
     df = pl.read_parquet(DATA_PATH / "vxx_spot.parquet")
-    with open(Path(__file__).parent.resolve() / "json" / "data_generator.json") as f:
+    with open(JSON_PATH / "data_generator.json") as f:
         parameters = json.load(f)
     data_parameters = DataGeneratorParameters(**parameters)
 
     data_generator = DataGenerator(parameters=data_parameters, df=df)
     data_generator.compute_trading_data()
     df = data_generator()
-    print(data_generator)
-    print(df.tail())
-    print(df.columns)
+    if verbose:
+        print(data_generator)
+        print(df.tail())
+        print(df.columns)
 
     return df
 
