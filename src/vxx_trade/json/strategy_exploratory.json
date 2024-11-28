@@ -1,0 +1,43 @@
+{
+    "matplotlib_settings": {
+        "vix_cp": {
+            "title": "VIX",
+            "x_lims": [
+                0,
+                100
+            ]
+        },
+        "vvix_cp": {
+            "title": "VVIX",
+            "x_lims": [
+                50,
+                225
+            ]
+        },
+        "vol_ts": {
+            "title": "VIX/VIXM Term-Structure",
+            "x_lims": [
+                0,
+                2
+            ]
+        }
+    },
+    "parameters": {
+        "target_title": "VXX",
+        "target_col": "vxx_log_ret",
+        "cmap": "Spectral",
+        "figsize": [
+            10,
+            8
+        ],
+        "years": [
+            2012,
+            2024
+        ],
+        "y_lims": [
+            -0.3,
+            0.4
+        ],
+        "y_tick_count": 15
+    }
+}
