@@ -1,11 +1,10 @@
 import copy
-import json
 from dataclasses import asdict, dataclass
 
 import numpy as np
 import polars as pl
 
-from vxx_trade import DATA_PATH, JSON_PATH
+from vxx_trade import DATA_PATH, DATAGEN_PARAMETERS
 
 
 @dataclass
@@ -18,9 +17,22 @@ class DataGeneratorParameters:
 class DataGenerator(DataGeneratorParameters):
     _volatility_columns = ["vix_cp", "vol_ts", "vvix_cp"]
 
-    def __init__(self, parameters: DataGeneratorParameters, df: pl.DataFrame):
+    def __init__(
+        self,
+        parameters: DataGeneratorParameters,
+        df: pl.DataFrame,
+        zscore_period: int | None = None,
+        rank_bucket: int | None = None,
+        ewma_com: int | None = None,
+    ):
         super().__init__(**asdict(parameters))
         self._df = df
+        if zscore_period is not None:
+            self.zscore_period = zscore_period
+        if rank_bucket is not None:
+            self.rank_bucket = rank_bucket
+        if ewma_com is not None:
+            self.ewma_com = None
 
     def __call__(self) -> pl.DataFrame:
         return self.df
@@ -71,7 +83,9 @@ class DataGenerator(DataGeneratorParameters):
         )
 
     def compute_vxx_ret(self, df: pl.DataFrame) -> pl.DataFrame:
-        return df.with_columns(pl.col("adj_price").log().diff().alias("vxx_log_ret"))
+        return df.with_columns(
+            pl.col("adj_price").log().diff().shift(-1).alias("vxx_log_ret")
+        )
 
     def compute_spread_ewma_zscore(self, df: pl.DataFrame, column: str) -> pl.DataFrame:
         df = self.compute_ewma(df=df, column=column)
@@ -98,7 +112,7 @@ class DataGenerator(DataGeneratorParameters):
         return df.with_columns(
             (
                 (
-                    pl.col(column).rank(method="max", descending=True)
+                    pl.col(column).rank(method="max", descending=False)
                     / df.height
                     * self.rank_bucket
                 )
@@ -113,7 +127,7 @@ class DataGenerator(DataGeneratorParameters):
             pl.col(column).ewm_mean(com=self.ewma_com).alias(f"{column}_ewma")
         )
 
-    def compute_term_structure_vol(self, df: pl.DataFrame):
+    def compute_term_structure_vol(self, df: pl.DataFrame) -> pl.DataFrame:
         return df.with_columns(
             pl.col("vix_cp").truediv(pl.col("vixm_cp")).alias("vol_ts")
         )
@@ -126,11 +140,9 @@ class DataGenerator(DataGeneratorParameters):
         )
 
 
-def generate_data_for_strategy(verbose: bool = True):
+def generate_data_for_strategy(verbose: bool = True) -> DataGenerator:
     df = pl.read_parquet(DATA_PATH / "vxx_spot.parquet")
-    with open(JSON_PATH / "data_generator.json") as f:
-        parameters = json.load(f)
-    data_parameters = DataGeneratorParameters(**parameters)
+    data_parameters = DataGeneratorParameters(**DATAGEN_PARAMETERS)
 
     data_generator = DataGenerator(parameters=data_parameters, df=df)
     data_generator.compute_trading_data()
@@ -140,7 +152,7 @@ def generate_data_for_strategy(verbose: bool = True):
         print(df.tail())
         print(df.columns)
 
-    return df
+    return data_generator
 
 
 if __name__ == "__main__":
