@@ -73,6 +73,7 @@ class DataGenerator(DataGeneratorParameters):
             df = self.compute_spread_ewma_zscore(df=df, column=vol_col)
 
         self.df = df
+        return df
 
     def compute_vxx_adjusted_price(self, df: pl.DataFrame) -> pl.DataFrame:
         min_adjustment = df.select(pl.min("adjustmentfactor")).to_numpy()[0][0]

@@ -1,3 +1,4 @@
 {
-    "style": "dark_background"
+    "style": "dark_background",
+    "cmap": "Spectral"
 }
