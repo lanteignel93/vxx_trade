@@ -32,7 +32,7 @@ class DataGenerator(DataGeneratorParameters):
         if rank_bucket is not None:
             self.rank_bucket = rank_bucket
         if ewma_com is not None:
-            self.ewma_com = None
+            self.ewma_com = ewma_com
 
     def __call__(self) -> pl.DataFrame:
         return self.df
@@ -77,15 +77,27 @@ class DataGenerator(DataGeneratorParameters):
 
     def compute_vxx_adjusted_price(self, df: pl.DataFrame) -> pl.DataFrame:
         min_adjustment = df.select(pl.min("adjustmentfactor")).to_numpy()[0][0]
-        return df.with_columns(
-            pl.col("adjustmentfactor").truediv(min_adjustment)
-        ).with_columns(
-            pl.col("closeprice").mul(pl.col("adjustmentfactor")).alias("adj_price"),
+        return (
+            df.with_columns(pl.col("adjustmentfactor").truediv(min_adjustment))
+            .with_columns(
+                pl.col("closeprice").mul(pl.col("adjustmentfactor")).alias("adj_close"),
+            )
+            .with_columns(
+                pl.col("openprice").mul(pl.col("adjustmentfactor")).alias("adj_open")
+            )
         )
 
     def compute_vxx_ret(self, df: pl.DataFrame) -> pl.DataFrame:
-        return df.with_columns(
-            pl.col("adj_price").log().diff().shift(-1).alias("vxx_log_ret")
+        return (
+            df.with_columns(pl.col("adj_close").log().diff().shift(-1).alias("cc_ret"))
+            .with_columns(
+                (pl.col("adj_close").log() - pl.col("adj_open").log()).alias("oc_ret")
+            )
+            .with_columns(
+                (pl.col("adj_open").log().shift(-1) - pl.col("adj_close").log()).alias(
+                    "co_ret"
+                )
+            )
         )
 
     def compute_spread_ewma_zscore(self, df: pl.DataFrame, column: str) -> pl.DataFrame:
@@ -105,7 +117,7 @@ class DataGenerator(DataGeneratorParameters):
 
         return df.with_columns(
             pl.col(f"{column}_ewma_zscore")
-            .cut(np.arange(-2, 2.5, 0.5))
+            .cut(list(np.arange(-2, 2.5, 0.5)))
             .alias(f"{column}_zscore_bucket")
         )
 
@@ -130,7 +142,7 @@ class DataGenerator(DataGeneratorParameters):
 
     def compute_term_structure_vol(self, df: pl.DataFrame) -> pl.DataFrame:
         return df.with_columns(
-            pl.col("vix_cp").truediv(pl.col("vixm_cp")).alias("vol_ts")
+            pl.col("vix_cp").truediv(pl.col("vix3m_cp")).alias("vol_ts")
         )
 
     def vxx_reverse_split_dates(self, df: pl.DataFrame) -> pl.DataFrame:

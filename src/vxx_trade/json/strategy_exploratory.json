@@ -24,8 +24,10 @@
     },
     "parameters": {
         "target_title": "VXX",
-        "target_col": "vxx_log_ret",
-        "cmap": "Spectral",
+        "target_col": [
+            "cc_ret",
+            "Close-to-Close Returns"
+        ],
         "figsize": [
             10,
             8

@@ -1,7 +1,12 @@
 import json
 from pathlib import Path
 
-from _utils import MatplotlibAxesLimit, MatplotlibFigSize, YearsResearch
+from vxx_trade._utils import (
+    MatplotlibAxesLimit,
+    MatplotlibFigSize,
+    TargetColumn,
+    YearsResearch,
+)
 
 DATA_PATH = Path(__file__).parent.resolve() / "data"
 JSON_PATH = Path(__file__).parent.resolve() / "json"
@@ -27,3 +32,6 @@ EXPLORATORY_PARAMETERS["figsize"] = MatplotlibFigSize(
     *EXPLORATORY_PARAMETERS["figsize"]
 )
 EXPLORATORY_PARAMETERS["years"] = YearsResearch(*EXPLORATORY_PARAMETERS["years"])
+EXPLORATORY_PARAMETERS["target_col"] = TargetColumn(
+    *EXPLORATORY_PARAMETERS["target_col"]
+)
