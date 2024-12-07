@@ -55,6 +55,8 @@ class TradeExploratory(TradeExploratoryParameters):
         y_lims: MatplotlibFigSize | list | tuple | None = None,
         y_tick_count: int | None = None,
         data_generator: DataGenerator | None = None,
+        save_file: bool = False,
+        display: bool = False,
     ):
         super().__init__(**asdict(parameters))
 
@@ -92,6 +94,9 @@ class TradeExploratory(TradeExploratoryParameters):
         if data_generator is not None:
             self._handle_data_generator(data_generator)
 
+        self.save_file = save_file
+        self.display = display
+
     def _handle_data_generator(self, data_generator: DataGenerator) -> None:
         self.df = data_generator.df
         self.zscore_period = data_generator.zscore_period
@@ -123,8 +128,10 @@ class TradeExploratory(TradeExploratoryParameters):
         )
 
         plt.legend()
-        plt.savefig(IMG_PATH / "cagr_returns.png")
-        # plt.show()
+        if self.save_file:
+            plt.savefig(IMG_PATH / "cagr_returns.png")
+        if self.display:
+            plt.show()
 
     def barplot_vxx_ret_zscore(self, column: str, col_analysis: str):
         title = MATPLOTLIB_EXPLORATORY[column]["title"]
@@ -165,13 +172,15 @@ class TradeExploratory(TradeExploratoryParameters):
         ax.set_title(
             f"{self.target_title} {self.target_col.return_type} {col_analysis.capitalize()} per different {title} - EWMA {title} {self.zscore_period}days Zscore buckets"
         )
-        print(tmp.select([f"{column}_zscore_bucket", col_analysis]))
 
-        plt.savefig(
-            IMG_PATH
-            / f"{title.lower().replace('/','_').replace(' ', '_')}_{self.target_col.return_type.lower().replace(' ','_')}_{col_analysis.replace(' ', '_')}_zscore.png"
-        )
-        # plt.show()
+        if self.save_file:
+            plt.savefig(
+                IMG_PATH
+                / f"{title.lower().replace('/','_').replace(' ', '_')}_{self.target_col.return_type.lower().replace(' ','_')}_{col_analysis.replace(' ', '_')}_zscore.png"
+            )
+        if self.display:
+            print(tmp.select([f"{column}_zscore_bucket", col_analysis]))
+            plt.show()
 
     def barplot_vxx_ret_decile(self, column: str, col_analysis: str):
         title = MATPLOTLIB_EXPLORATORY[column]["title"]
@@ -211,13 +220,15 @@ class TradeExploratory(TradeExploratoryParameters):
         ax.set_title(
             f"{self.target_title} {self.target_col.return_type} {col_analysis.capitalize()} per different {title} buckets"
         )
-        print(tmp.select([f"{column}_rank", col_analysis]))
 
-        plt.savefig(
-            IMG_PATH
-            / f"{title.lower().replace('/','_').replace(' ', '_')}_{self.target_col.return_type.lower().replace(' ','_')}_{col_analysis.replace(' ', '_')}_decile.png"
-        )
-        # plt.show()
+        if self.save_file:
+            plt.savefig(
+                IMG_PATH
+                / f"{title.lower().replace('/','_').replace(' ', '_')}_{self.target_col.return_type.lower().replace(' ','_')}_{col_analysis.replace(' ', '_')}_decile.png"
+            )
+        if self.display:
+            print(tmp.select([f"{column}_rank", col_analysis]))
+            plt.show()
 
     def histogram_vxx_ret(self):
         x = self.df.drop_nulls().get_column(self.target_col.name).to_numpy()
@@ -266,8 +277,10 @@ class TradeExploratory(TradeExploratoryParameters):
         ax.set_title(
             f"{self.target_title} {self.target_col.return_type} Histogram {self.years[0]}-{self.years[1]}"
         )
-        plt.savefig(IMG_PATH / f"{self.target_col.name.lower()}_histogram.png")
-        # plt.show()
+        if self.save_file:
+            plt.savefig(IMG_PATH / f"{self.target_col.name.lower()}_histogram.png")
+        if self.display:
+            plt.show()
 
     def _linear_regression(
         self, df: pl.DataFrame, column: str
@@ -340,11 +353,13 @@ class TradeExploratory(TradeExploratoryParameters):
         ax.set_title(
             f"{self.target_title} {self.target_col.return_type} versus {title} Level {self.years[0]}-{self.years[1]}"
         )
-        plt.savefig(
-            IMG_PATH
-            / f"scatter_{title.lower().replace('/','_').replace(' ', '_')}_{self.target_col.return_type.lower().replace('_',' ')}.png"
-        )
-        # plt.show()
+        if self.save_file:
+            plt.savefig(
+                IMG_PATH
+                / f"scatter_{title.lower().replace('/','_').replace(' ', '_')}_{self.target_col.return_type.lower().replace('_',' ')}.png"
+            )
+        if self.display:
+            plt.show()
 
     def plot_analysis(self) -> None:
         self.vxx_ret_plot_cagr()
@@ -364,6 +379,16 @@ def main():
     exploratory_parameters = TradeExploratoryParameters(**EXPLORATORY_PARAMETERS)
     trade_explorator = TradeExploratory(parameters=exploratory_parameters)
     trade_explorator.plot_analysis()
+
+
+def strategy_explorer(display: bool = False) -> TradeExploratory:
+    data_gen = generate_data_for_strategy(verbose=False)
+    EXPLORATORY_PARAMETERS["data_generator"] = data_gen
+    exploratory_parameters = TradeExploratoryParameters(**EXPLORATORY_PARAMETERS)
+    trade_explorator = TradeExploratory(
+        parameters=exploratory_parameters, display=display
+    )
+    return trade_explorator
 
 
 if __name__ == "__main__":
