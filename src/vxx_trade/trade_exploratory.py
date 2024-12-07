@@ -7,7 +7,12 @@ import polars as pl
 from matplotlib import cm, colors
 from scipy.stats import kurtosis, skew
 
-from vxx_trade import EXPLORATORY_PARAMETERS, MATPLOTLIB_EXPLORATORY, MATPLOTLIB_STYLE
+from vxx_trade import (
+    EXPLORATORY_PARAMETERS,
+    IMG_PATH,
+    MATPLOTLIB_EXPLORATORY,
+    MATPLOTLIB_STYLE,
+)
 from vxx_trade._utils import (
     MatplotlibAxesLimit,
     MatplotlibFigSize,
@@ -17,6 +22,8 @@ from vxx_trade._utils import (
 from vxx_trade.data_generator import DataGenerator, generate_data_for_strategy
 
 plt.style.use(MATPLOTLIB_STYLE["style"])
+
+BUCKET_COL_ANALYSIS = ["mean returns", "drawdown", "sharpe", "cagr"]
 
 
 class LinearRegressionOutput(NamedTuple):
@@ -116,16 +123,28 @@ class TradeExploratory(TradeExploratoryParameters):
         )
 
         plt.legend()
-        plt.savefig("cagr_returns.png")
+        plt.savefig(IMG_PATH / "cagr_returns.png")
+        # plt.show()
 
-    def barplot_vxx_ret_zscore(self, column: str):
+    def barplot_vxx_ret_zscore(self, column: str, col_analysis: str):
         title = MATPLOTLIB_EXPLORATORY[column]["title"]
 
         tmp = (
             self.df.select([self.target_col.name, f"{column}_zscore_bucket"])
             .drop_nulls()
             .group_by(f"{column}_zscore_bucket")
-            .mean()
+            .agg(
+                [
+                    pl.col(self.target_col.name).mean().alias("mean returns"),
+                    pl.col(self.target_col.name).std().alias("std"),
+                    pl.col(self.target_col.name).max().alias("drawdown"),
+                    pl.col(self.target_col.name).min().alias("drawup"),
+                    pl.col(self.target_col.name).sum().alias("cagr"),
+                ]
+            )
+            .with_columns(
+                (-np.sqrt(252) * pl.col("mean returns") / pl.col("std")).alias("sharpe")
+            )
             .sort(f"{column}_zscore_bucket")
         )
 
@@ -133,25 +152,42 @@ class TradeExploratory(TradeExploratoryParameters):
         colours = self.cmap(np.linspace(0, 1, tmp.shape[0])[::-1])
         ax.bar(
             tmp.get_column(f"{column}_zscore_bucket"),
-            tmp.get_column(self.target_col.name),
+            tmp.get_column(col_analysis),
             color=colours,
         )
         ax.set_xlabel(f"Zscore bucket of {title} - EWMA {title}")
-        ax.set_ylabel(f"Average {self.target_title} Returns in bucket.")
+        ax.set_ylabel(f"{self.target_title} {col_analysis.capitalize()} in bucket.")
         ax.set_title(
-            f"Average {self.target_title} {self.target_col.return_type} Returns per different {title} - EWMA {title} {self.zscore_period}days Zscore buckets"
+            f"{self.target_title} {self.target_col.return_type} {col_analysis.capitalize()} per different {title} - EWMA {title} {self.zscore_period}days Zscore buckets"
         )
+        print(tmp.select([f"{column}_zscore_bucket", col_analysis]))
 
-        plt.savefig(f"{title.lower().replace('/','_').replace(' ', '_')}_zscore.png")
+        plt.savefig(
+            IMG_PATH
+            / f"{title.lower().replace('/','_').replace(' ', '_')}_{self.target_col.return_type.lower().replace(' ','_')}_{col_analysis.replace(' ', '_')}_zscore.png"
+        )
+        # plt.show()
 
-    def barplot_vxx_ret_decile(self, column: str):
+    def barplot_vxx_ret_decile(self, column: str, col_analysis: str):
         title = MATPLOTLIB_EXPLORATORY[column]["title"]
 
         tmp = (
             self.df.select([f"{self.target_col.name}", f"{column}_rank", column])
             .drop_nulls()
             .group_by(f"{column}_rank")
-            .mean()
+            .agg(
+                [
+                    pl.col(self.target_col.name).mean().alias("mean returns"),
+                    pl.col(column).mean(),
+                    pl.col(self.target_col.name).std().alias("std"),
+                    pl.col(self.target_col.name).max().alias("drawdown"),
+                    pl.col(self.target_col.name).min().alias("drawup"),
+                    pl.col(self.target_col.name).sum().alias("cagr"),
+                ]
+            )
+            .with_columns(
+                (-np.sqrt(252) * pl.col("mean returns") / pl.col("std")).alias("sharpe")
+            )
             .sort(f"{column}_rank")
         )
 
@@ -159,14 +195,19 @@ class TradeExploratory(TradeExploratoryParameters):
 
         fig, ax = plt.subplots(figsize=(self.figsize.width, self.figsize.height))
         colours = self.cmap(np.linspace(0, 1, tmp.shape[0])[::-1])
-        ax.bar(x_label, tmp.get_column(self.target_col.name), color=colours)
-        ax.set_xlabel(f"Average {title} per rank")
-        ax.set_ylabel(f"Average {self.target_title} Returns in bucket.")
+        ax.bar(x_label, tmp.get_column(col_analysis), color=colours)
+        ax.set_xlabel(f"{title} per rank")
+        ax.set_ylabel(f"{self.target_title} {col_analysis.capitalize()} in bucket.")
         ax.set_title(
-            f"Average {self.target_title} {self.target_col.return_type} Returns per different {title} buckets"
+            f"{self.target_title} {self.target_col.return_type} {col_analysis.capitalize()} per different {title} buckets"
         )
+        print(tmp.select([f"{column}_rank", col_analysis]))
 
-        plt.savefig(f"{title.lower().replace('/','_').replace(' ', '_')}_decile.png")
+        plt.savefig(
+            IMG_PATH
+            / f"{title.lower().replace('/','_').replace(' ', '_')}_{self.target_col.return_type.lower().replace(' ','_')}_{col_analysis.replace(' ', '_')}_decile.png"
+        )
+        # plt.show()
 
     def histogram_vxx_ret(self):
         x = self.df.drop_nulls().get_column(self.target_col.name).to_numpy()
@@ -210,12 +251,13 @@ class TradeExploratory(TradeExploratoryParameters):
         )
         ax.set_xticks(np.linspace(self.y_lims.min, self.y_lims.max, self.y_tick_count))
 
-        ax.set_xlabel(f"{self.target_title} {self.target_col.return_type} Returns")
+        ax.set_xlabel(f"{self.target_title} {self.target_col.return_type}")
         ax.set_ylabel(f"{self.target_title} Returns Frequency Count")
         ax.set_title(
-            f"{self.target_title} {self.target_col.return_type} Returns Histogram {self.years[0]}-{self.years[1]}"
+            f"{self.target_title} {self.target_col.return_type} Histogram {self.years[0]}-{self.years[1]}"
         )
-        plt.savefig(f"{self.target_col.name.lower()}_histogram.png")
+        plt.savefig(IMG_PATH / f"{self.target_col.name.lower()}_histogram.png")
+        # plt.show()
 
     def _linear_regression(
         self, df: pl.DataFrame, column: str
@@ -284,19 +326,24 @@ class TradeExploratory(TradeExploratoryParameters):
         ax.set_yticks(np.linspace(self.y_lims.min, self.y_lims.max, self.y_tick_count))
 
         ax.set_xlabel(f"{title} Level")
-        ax.set_ylabel(f"{self.target_title} {self.target_col.return_type} Returns")
+        ax.set_ylabel(f"{self.target_title} {self.target_col.return_type}")
         ax.set_title(
-            f"{self.target_title} {self.target_col.return_type} Returns versus {title} Level {self.years[0]}-{self.years[1]}"
+            f"{self.target_title} {self.target_col.return_type} versus {title} Level {self.years[0]}-{self.years[1]}"
         )
-        plt.savefig(f"scatter_{title.lower().replace('/','_').replace(' ', '_')}.png")
+        plt.savefig(
+            IMG_PATH
+            / f"scatter_{title.lower().replace('/','_').replace(' ', '_')}_{self.target_col.return_type.lower().replace('_',' ')}.png"
+        )
+        # plt.show()
 
     def plot_analysis(self) -> None:
         self.vxx_ret_plot_cagr()
-        # self.histogram_vxx_ret()
-        # for col in self.analysis_columns:
-        #     self.scatter_plot_vxx_ret(column=col)
-        #     self.barplot_vxx_ret_decile(column=col)
-        #     self.barplot_vxx_ret_zscore(column=col)
+        self.histogram_vxx_ret()
+        for col in self.analysis_columns:
+            self.scatter_plot_vxx_ret(column=col)
+            for bucket_col in BUCKET_COL_ANALYSIS:
+                self.barplot_vxx_ret_decile(column=col, col_analysis=bucket_col)
+                self.barplot_vxx_ret_zscore(column=col, col_analysis=bucket_col)
 
         return
 

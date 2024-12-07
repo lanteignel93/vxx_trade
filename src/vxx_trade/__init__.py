@@ -10,6 +10,12 @@ from vxx_trade._utils import (
 
 DATA_PATH = Path(__file__).parent.resolve() / "data"
 JSON_PATH = Path(__file__).parent.resolve() / "json"
+IMG_PATH = (
+    Path(
+        "/home/laurent/git_projects/trading_strategies/vol_strategies/vxx_trade/src/vxx_trade/"
+    )
+    / "images"
+)
 
 with open(JSON_PATH / "data_generator.json") as f:
     DATAGEN_PARAMETERS = json.load(f)
