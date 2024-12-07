@@ -26,3 +26,4 @@ vxx_trade = ["json/*.json", "data/*.parquet", "images/*.png"]
 
 [project.scripts]
 generate_trading_data = "vxx_trade.data_generator:generate_data_for_strategy"
+strategy_explorer = "vxx_trade.trade_exploratory:strategy_explorer"
