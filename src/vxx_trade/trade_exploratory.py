@@ -137,7 +137,12 @@ class TradeExploratory(TradeExploratoryParameters):
                 [
                     pl.col(self.target_col.name).mean().alias("mean returns"),
                     pl.col(self.target_col.name).std().alias("std"),
-                    pl.col(self.target_col.name).max().alias("drawdown"),
+                    (
+                        pl.col(self.target_col.name).cum_sum().cum_max()
+                        - pl.col(self.target_col.name).cum_sum()
+                    )
+                    .max()
+                    .alias("drawdown"),
                     pl.col(self.target_col.name).min().alias("drawup"),
                     pl.col(self.target_col.name).sum().alias("cagr"),
                 ]
@@ -180,7 +185,12 @@ class TradeExploratory(TradeExploratoryParameters):
                     pl.col(self.target_col.name).mean().alias("mean returns"),
                     pl.col(column).mean(),
                     pl.col(self.target_col.name).std().alias("std"),
-                    pl.col(self.target_col.name).max().alias("drawdown"),
+                    (
+                        pl.col(self.target_col.name).cum_sum().cum_max()
+                        - pl.col(self.target_col.name).cum_sum()
+                    )
+                    .max()
+                    .alias("drawdown"),
                     pl.col(self.target_col.name).min().alias("drawup"),
                     pl.col(self.target_col.name).sum().alias("cagr"),
                 ]
