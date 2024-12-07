@@ -1,6 +1,6 @@
 [project]
 name = "vxx_trade"
-version = "0.0.4"
+version = "0.0.5"
 authors = [
   { name="Laurent Lanteigne", email="laurent.lanteigne@gmail.com" },
 ]
