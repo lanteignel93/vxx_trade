@@ -49,6 +49,7 @@ def foo():
 
 def plot_clusters(df):
     cluster_cols = ["KMeansCluster", "HierarchicalCluster", "GMMCluster", "vix_cp_rank"]
+    df = foo()
 
     for col in cluster_cols:
         df.group_by(col).agg(
@@ -62,7 +63,7 @@ def plot_clusters(df):
 def compute_ret_sharpe(df):
     cluster_cols = ["KMeansCluster", "HierarchicalCluster", "GMMCluster", "vix_cp_rank"]
 
-    df.with_columns(
+    df = df.with_columns(
         [
             (pl.col("cc_ret") * 252 / (pl.col("cc_ret").abs() * 252 ** 0.5).mean()).alias(f"{col}_sharpe").over(col) for col in cluster_cols
         ]
