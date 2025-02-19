@@ -19,4 +19,3 @@ class YearsResearch(NamedTuple):
 class TargetColumn(NamedTuple):
     name: str
     return_type: str
-

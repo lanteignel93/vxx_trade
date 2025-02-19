@@ -11,12 +11,13 @@ from vxx_trade import DATA_PATH, DATAGEN_PARAMETERS
 class DataGeneratorParameters:
     """
     Data class to hold parameters for data generation.
-    
+
     Attributes:
         zscore_period (int): Period for z-score calculation.
         rank_bucket (int): Number of buckets for ranking.
         ewma_com (int): Center of mass for EWMA calculation.
     """
+
     zscore_period: int
     rank_bucket: int
     ewma_com: int
@@ -26,11 +27,12 @@ class DataGenerator(DataGeneratorParameters):
     """
     Class to generate trading data for VXX strategy.
     Inherits from DataGeneratorParameters.
-    
+
     Attributes:
         _volatility_columns (list): List of volatility-related column names.
         _df (pl.DataFrame): DataFrame containing the trading data.
     """
+
     _volatility_columns = ["vix_cp", "vol_ts", "vvix_cp"]
 
     def __init__(
@@ -43,7 +45,7 @@ class DataGenerator(DataGeneratorParameters):
     ):
         """
         Initialize the DataGenerator with parameters and DataFrame.
-        
+
         Args:
             parameters (DataGeneratorParameters): Parameters for data generation.
             df (pl.DataFrame): DataFrame containing the trading data.
@@ -63,7 +65,7 @@ class DataGenerator(DataGeneratorParameters):
     def __call__(self) -> pl.DataFrame:
         """
         Return the DataFrame.
-        
+
         Returns:
             pl.DataFrame: The DataFrame containing the trading data.
         """
@@ -72,7 +74,7 @@ class DataGenerator(DataGeneratorParameters):
     def __repr__(self):
         """
         String representation of the class.
-        
+
         Returns:
             str: String representation of the class.
         """
@@ -81,7 +83,7 @@ class DataGenerator(DataGeneratorParameters):
     def __copy__(self):
         """
         Create a shallow copy of the instance.
-        
+
         Returns:
             DataGenerator: A shallow copy of the instance.
         """
@@ -93,10 +95,10 @@ class DataGenerator(DataGeneratorParameters):
     def __deepcopy__(self, memo: dict):
         """
         Create a deep copy of the instance.
-        
+
         Args:
             memo (dict): Memoization dictionary for deep copy.
-        
+
         Returns:
             DataGenerator: A deep copy of the instance.
         """
@@ -111,7 +113,7 @@ class DataGenerator(DataGeneratorParameters):
     def df(self):
         """
         Getter for the DataFrame.
-        
+
         Returns:
             pl.DataFrame: The DataFrame containing the trading data.
         """
@@ -121,7 +123,7 @@ class DataGenerator(DataGeneratorParameters):
     def df(self, df: pl.DataFrame):
         """
         Setter for the DataFrame.
-        
+
         Args:
             df (pl.DataFrame): The DataFrame containing the trading data.
         """
@@ -130,7 +132,7 @@ class DataGenerator(DataGeneratorParameters):
     def compute_trading_data(self) -> pl.DataFrame:
         """
         Compute various trading data metrics and update the DataFrame.
-        
+
         Returns:
             pl.DataFrame: The updated DataFrame with computed metrics.
         """
@@ -149,10 +151,10 @@ class DataGenerator(DataGeneratorParameters):
     def compute_vxx_adjusted_price(self, df: pl.DataFrame) -> pl.DataFrame:
         """
         Adjust prices based on the adjustment factor.
-        
+
         Args:
             df (pl.DataFrame): The DataFrame containing the trading data.
-        
+
         Returns:
             pl.DataFrame: The DataFrame with adjusted prices.
         """
@@ -170,10 +172,10 @@ class DataGenerator(DataGeneratorParameters):
     def compute_vxx_ret(self, df: pl.DataFrame) -> pl.DataFrame:
         """
         Compute returns based on adjusted prices.
-        
+
         Args:
             df (pl.DataFrame): The DataFrame containing the trading data.
-        
+
         Returns:
             pl.DataFrame: The DataFrame with computed returns.
         """
@@ -192,11 +194,11 @@ class DataGenerator(DataGeneratorParameters):
     def compute_spread_ewma_zscore(self, df: pl.DataFrame, column: str) -> pl.DataFrame:
         """
         Compute EWMA z-scores and bucket them.
-        
+
         Args:
             df (pl.DataFrame): The DataFrame containing the trading data.
             column (str): The column name to compute EWMA z-scores for.
-        
+
         Returns:
             pl.DataFrame: The DataFrame with computed EWMA z-scores and buckets.
         """
@@ -223,11 +225,11 @@ class DataGenerator(DataGeneratorParameters):
     def compute_variable_rank(self, df: pl.DataFrame, column: str) -> pl.DataFrame:
         """
         Rank variables and bucket them.
-        
+
         Args:
             df (pl.DataFrame): The DataFrame containing the trading data.
             column (str): The column name to rank.
-        
+
         Returns:
             pl.DataFrame: The DataFrame with ranked variables and buckets.
         """
@@ -247,11 +249,11 @@ class DataGenerator(DataGeneratorParameters):
     def compute_ewma(self, df: pl.DataFrame, column: str) -> pl.DataFrame:
         """
         Compute the exponentially weighted moving average.
-        
+
         Args:
             df (pl.DataFrame): The DataFrame containing the trading data.
             column (str): The column name to compute EWMA for.
-        
+
         Returns:
             pl.DataFrame: The DataFrame with computed EWMA.
         """
@@ -262,10 +264,10 @@ class DataGenerator(DataGeneratorParameters):
     def compute_term_structure_vol(self, df: pl.DataFrame) -> pl.DataFrame:
         """
         Compute term structure volatility.
-        
+
         Args:
             df (pl.DataFrame): The DataFrame containing the trading data.
-        
+
         Returns:
             pl.DataFrame: The DataFrame with computed term structure volatility.
         """
@@ -276,10 +278,10 @@ class DataGenerator(DataGeneratorParameters):
     def vxx_reverse_split_dates(self, df: pl.DataFrame) -> pl.DataFrame:
         """
         Identify reverse split dates based on adjustment factor changes.
-        
+
         Args:
             df (pl.DataFrame): The DataFrame containing the trading data.
-        
+
         Returns:
             pl.DataFrame: The DataFrame with identified reverse split dates.
         """
@@ -293,10 +295,10 @@ class DataGenerator(DataGeneratorParameters):
 def generate_data_for_strategy(verbose: bool = True) -> DataGenerator:
     """
     Generate data for the VXX trading strategy.
-    
+
     Args:
         verbose (bool, optional): If True, print the data generator and DataFrame info.
-    
+
     Returns:
         DataGenerator: The DataGenerator instance with computed trading data.
     """
