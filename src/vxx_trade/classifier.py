@@ -4,6 +4,7 @@ from skopt import BayesSearchCV
 from skopt.space import Real, Categorical, Integer
 from xgboost import XGBClassifier
 
+
 class ClassifierModel(ABC):
     @abstractmethod
     def fit(self, train, target):
@@ -110,4 +111,3 @@ class XGBClassifierCV(ClassifierModel):
 
     def predict(self, test):
         return self.model.predict(test)
-

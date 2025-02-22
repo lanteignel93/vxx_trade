@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from sklearn.cluster import KMeans, AgglomerativeClustering
 from sklearn.mixture import GaussianMixture
 
+
 class ClusteringAlgorithm(ABC):
     def __init__(self, n_clusters: int, name: str):
         self.model = None
@@ -54,4 +55,3 @@ class GMMClustering(ClusteringAlgorithm):
 
     def predict(self, df):
         return self.model.predict(df.to_numpy())
-
