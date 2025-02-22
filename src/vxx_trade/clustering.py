@@ -9,7 +9,6 @@ class ClusteringAlgorithm(ABC):
         self._n_clusters = n_clusters
         self._name = name
 
-
     @property
     def n_clusters(self):
         return self._n_clusters
@@ -23,9 +22,11 @@ class ClusteringAlgorithm(ABC):
 
     def predict(self, df: pl.DataFrame, features: list[str]) -> pl.DataFrame:
         return df.with_columns(
-            pl.Series(self.model.predict(df.select(features).to_numpy()).astype("int32")).alias(self.name)
+            pl.Series(
+                self.model.predict(df.select(features).to_numpy()).astype("int32")
+            ).alias(self.name)
         )
-        
+
     def __repr__(self):
         return f"{self.name}(n_clusters={self.n_clusters})"
 
@@ -38,6 +39,7 @@ class KMeansClustering(ClusteringAlgorithm):
     @property
     def model(self):
         return self._model
+
 
 class HierarchicalClustering(ClusteringAlgorithm):
     def __init__(self, n_clusters: int):
@@ -52,9 +54,10 @@ class HierarchicalClustering(ClusteringAlgorithm):
 class GMMClustering(ClusteringAlgorithm):
     def __init__(self, n_clusters: int, random_state: int = 42):
         super().__init__(n_clusters, "GMMCluster")
-        self._model = GaussianMixture(n_components=n_clusters, random_state=random_state)
+        self._model = GaussianMixture(
+            n_components=n_clusters, random_state=random_state
+        )
 
     @property
     def model(self):
         return self._model
-

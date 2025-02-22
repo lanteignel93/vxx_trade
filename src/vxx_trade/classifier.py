@@ -7,15 +7,15 @@ from xgboost import XGBClassifier
 
 
 class ClassifierModel(ABC):
-   def fit(self, df: pl.DataFrame, features: list[str], target: str) -> None:
+    def fit(self, df: pl.DataFrame, features: list[str], target: str) -> None:
         self.model.fit(df.select(features), df.get_column(target))
 
-   def predict(self, df: pl.DataFrame, features: list[str]) -> pl.DataFrame:
-        pred =  self.model.predict(df.select(features)) 
+    def predict(self, df: pl.DataFrame, features: list[str]) -> pl.DataFrame:
+        pred = self.model.predict(df.select(features))
         return df.with_columns(pl.Series(pred).alias("prediction"))
-   
-   def __repr__(self):
-       return f"{self.__class__.__name__}"
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}"
 
 
 class RandomForestClassifierSimple(ClassifierModel):
@@ -65,7 +65,6 @@ class RandomForestClassifierCV(ClassifierModel):
     def __repr__(self) -> str:
         return f"RandomForestClassifierCV(params={self.params}"
 
-   
 
 class XGBClassifierCV(ClassifierModel):
     def __init__(
@@ -100,5 +99,3 @@ class XGBClassifierCV(ClassifierModel):
 
     def __repr__(self) -> str:
         return f"XGBClassifierCV(params={self.params}"
-
-    

@@ -48,7 +48,9 @@ class MinMaxScaling(Scaling):
                 (
                     (pl.col(feature) - self.min.get_column(feature))
                     / (self.max.get_column(feature) - self.min.get_column(feature))
-                ).clip(lower_bound=0, upper_bound=1).alias(f"{feature}_minmax")
+                )
+                .clip(lower_bound=0, upper_bound=1)
+                .alias(f"{feature}_minmax")
             )
         return df
 
@@ -86,7 +88,10 @@ class ZScoreScaling(Scaling):
         for feature in features:
             df = df.with_columns(
                 f"{feature}_zscore",
-                ((pl.col(feature) - self.mean.get_column(feature)) / self.std.get_column(feature)),
+                (
+                    (pl.col(feature) - self.mean.get_column(feature))
+                    / self.std.get_column(feature)
+                ),
             )
         return df
 
