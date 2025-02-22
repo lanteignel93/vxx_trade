@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+import polars as pl
 from sklearn.ensemble import RandomForestClassifier
 from skopt import BayesSearchCV
 from skopt.space import Real, Categorical, Integer
@@ -6,16 +7,15 @@ from xgboost import XGBClassifier
 
 
 class ClassifierModel(ABC):
-    @abstractmethod
-    def fit(self, train, target):
-        pass
+   def fit(self, df: pl.DataFrame, features: list[str], target: str) -> None:
+        self.model.fit(df.select(features), df.get_column(target))
 
-    @abstractmethod
-    def predict(self, test):
-        pass
-
-    def __repr__(self):
-        return f"{self.__class__.__name__}"
+   def predict(self, df: pl.DataFrame, features: list[str]) -> pl.DataFrame:
+        pred =  self.model.predict(df.select(features)) 
+        return df.with_columns(pl.Series(pred).alias("prediction"))
+   
+   def __repr__(self):
+       return f"{self.__class__.__name__}"
 
 
 class RandomForestClassifierSimple(ClassifierModel):
@@ -25,12 +25,6 @@ class RandomForestClassifierSimple(ClassifierModel):
         self.model = RandomForestClassifier(
             n_estimators=self.n_estimators, random_state=self.random_state
         )
-
-    def fit(self, train, target) -> None:
-        self.model.fit(train, target)
-
-    def predict(self, test):
-        return self.model.predict(test)
 
     def __repr__(self) -> str:
         return f"RandomForestClassifier(n_estimators={self.n_estimators}, random_state={self.random_state})"
@@ -68,12 +62,10 @@ class RandomForestClassifierCV(ClassifierModel):
             verbose=self.verbose,
         )
 
-    def fit(self, train, target) -> None:
-        self.model.fit(train, target)
+    def __repr__(self) -> str:
+        return f"RandomForestClassifierCV(params={self.params}"
 
-    def predict(self, test):
-        return self.model.predict(test)
-
+   
 
 class XGBClassifierCV(ClassifierModel):
     def __init__(
@@ -106,8 +98,7 @@ class XGBClassifierCV(ClassifierModel):
             verbose=self.verbose,
         )
 
-    def fit(self, train, target) -> None:
-        self.model.fit(train, target)
+    def __repr__(self) -> str:
+        return f"XGBClassifierCV(params={self.params}"
 
-    def predict(self, test):
-        return self.model.predict(test)
+    

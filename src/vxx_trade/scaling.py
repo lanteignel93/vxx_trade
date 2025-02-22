@@ -19,8 +19,24 @@ class Scaling(ABC):
 
 class MinMaxScaling(Scaling):
     def __init__(self):
-        self.min = None
-        self.max = None
+        self._min = None
+        self._max = None
+
+    @property
+    def min(self):
+        return self._min
+
+    @property
+    def max(self):
+        return self._max
+
+    @min.setter
+    def min(self, value: pl.Series):
+        self._min = value
+
+    @max.setter
+    def max(self, value: pl.Series):
+        self._max = value
 
     def fit(self, df: pl.DataFrame, features: list[str]) -> None:
         self.min = df.select(features).min()
@@ -28,12 +44,11 @@ class MinMaxScaling(Scaling):
 
     def transform(self, df: pl.DataFrame, features: list[str]) -> pl.DataFrame:
         for feature in features:
-            df = df.with_column(
-                f"{feature}_minmax",
+            df = df.with_columns(
                 (
-                    (pl.col(feature) - self.min[feature])
-                    / (self.max[feature] - self.min[feature])
-                ).clip(lower=0, upper=1),
+                    (pl.col(feature) - self.min.get_column(feature))
+                    / (self.max.get_column(feature) - self.min.get_column(feature))
+                ).clip(lower_bound=0, upper_bound=1).alias(f"{feature}_minmax")
             )
         return df
 
@@ -44,8 +59,24 @@ class MinMaxScaling(Scaling):
 
 class ZScoreScaling(Scaling):
     def __init__(self):
-        self.mean = None
-        self.std = None
+        self._mean = None
+        self._std = None
+
+    @property
+    def mean(self):
+        return self._mean
+
+    @property
+    def std(self):
+        return self._std
+
+    @mean.setter
+    def mean(self, value: pl.Series):
+        self._mean = value
+
+    @std.setter
+    def std(self, value: pl.Series):
+        self._std = value
 
     def fit(self, df: pl.DataFrame, features: list[str]) -> None:
         self.mean = df.select(features).mean()
@@ -53,9 +84,9 @@ class ZScoreScaling(Scaling):
 
     def transform(self, df: pl.DataFrame, features: list[str]) -> pl.DataFrame:
         for feature in features:
-            df = df.with_column(
+            df = df.with_columns(
                 f"{feature}_zscore",
-                ((pl.col(feature) - self.mean[feature]) / self.std[feature]),
+                ((pl.col(feature) - self.mean.get_column(feature)) / self.std.get_column(feature)),
             )
         return df
 

@@ -58,7 +58,7 @@ class WFTrainTestGenerator:
             )
             if self.end_eval_date == prev:
                 self.stop_flag = True
-            return train, test
+            return train.drop_nulls(), test.drop_nulls()
 
     def handle_eval_frequency(self):
         if self.eval_frequency == EvalFrequency.MONTHLY:
