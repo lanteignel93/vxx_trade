@@ -1,6 +1,11 @@
 from abc import ABC, abstractmethod
 import polars as pl
+from enum import Enum
 
+class WinsorizationAlgorithmTypes(Enum):
+    MAD = "MADWinsorization"
+    Z_SCORE = "ZScoreWinsorization"
+    PERCENTILE = "PercentileWinsorization"
 
 class Winsorization(ABC):
 
@@ -16,6 +21,22 @@ class Winsorization(ABC):
     def fit_transform(self, df: pl.DataFrame, features: list[str]) -> pl.DataFrame:
         pass
 
+    def __repr__(self):
+        return f"{self.__class__.__name__}"
+
+class WinsorizationFactory:
+    def create_winsorization(self, winsorization_type: WinsorizationAlgorithmTypes, *args, **kwargs) -> Winsorization:
+        match winsorization_type:
+            case WinsorizationAlgorithmTypes.MAD:
+                return MADWinsorization(*args, **kwargs)
+            case WinsorizationAlgorithmTypes.Z_SCORE:
+                return ZScoreWinsorization(*args, **kwargs)
+            case WinsorizationAlgorithmTypes.PERCENTILE:
+                return PercentileWinsorization(*args, **kwargs)
+            case _:
+                return ValueError(
+                    f"Invalid Winsorization type, choose one of the available options from {' '.join(list(WinsorizationAlgorithmTypes.__members__.keys()))}"
+                )
 
 class MADWinsorization(Winsorization):
     def __init__(self, mad_multiplier: int):
@@ -80,7 +101,6 @@ class MADWinsorization(Winsorization):
         return self.transform(df, features)
 
 
-# TODO: Fix the Transform based on MAD
 class ZScoreWinzorization(Winsorization):
     def __init__(self, zscore_threshold: int):
         self.zscore_threshold = zscore_threshold
@@ -118,19 +138,20 @@ class ZScoreWinzorization(Winsorization):
     def transform(self, df: pl.DataFrame, features: list[str]) -> pl.DataFrame:
         for feature in features:
             df = df.with_columns(
-                f"{feature}_zscorewinsorized",
                 pl.when(
                     pl.col(feature)
-                    < self.mean[feature] - self.zscore_threshold * self.std[feature],
-                    self.mean[feature] - self.zscore_threshold * self.std[feature],
-                ).otherwise(
+                    < (self.mean[feature] - self.zscore_threshold * self.std[feature])
+                ).then(self.mean[feature] - self.zscore_threshold * self.std[feature])
+                .otherwise(
                     pl.when(
                         pl.col(feature)
                         > self.mean[feature]
-                        + self.zscore_threshold * self.std[feature],
-                        self.mean[feature] + self.zscore_threshold * self.std[feature],
-                    ).otherwise(pl.col(feature)),
-                ),
+                        + self.zscore_threshold * self.std[feature]
+                ).then(
+                        self.mean[feature] + self.zscore_threshold * self.std[feature]
+                    ).otherwise(pl.col(feature))
+                )
+                .alias(f"{feature}_zscorewinsorized")
             )
         return df
 
@@ -139,7 +160,6 @@ class ZScoreWinzorization(Winsorization):
         return self.transform(df, features)
 
 
-# TODO: Fix the Transform based on MAD
 class PercentileWinsorization(Winsorization):
     def __init__(self, lower_percentile: int, upper_percentile: int):
         self.lower_percentile = lower_percentile
@@ -168,16 +188,18 @@ class PercentileWinsorization(Winsorization):
     def transform(self, df: pl.DataFrame, features: list[str]) -> pl.DataFrame:
         for feature in features:
             df = df.with_columns(
-                f"{feature}_percentilewinsorized",
                 pl.when(
-                    pl.col(feature) < self.lower_bound[feature],
-                    self.lower_bound[feature],
+                    pl.col(feature) < self.lower_bound[feature]
+                ).then(
+                    self.lower_bound[feature]
                 ).otherwise(
                     pl.when(
-                        pl.col(feature) > self.upper_bound[feature],
+                        pl.col(feature) > self.upper_bound[feature]
+                    ).then(
                         self.upper_bound[feature],
-                    ).otherwise(pl.col(feature)),
-                ),
+                    ).otherwise(pl.col(feature))
+                )
+                .alias(f"{feature}_percentilewinsorized")
             )
         return df
 

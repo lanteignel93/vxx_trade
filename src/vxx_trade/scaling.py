@@ -1,5 +1,10 @@
+from enum import Enum
 from abc import ABC, abstractmethod
 import polars as pl
+
+class ScalingAlgorithmTypes(Enum):
+    MIN_MAX = "MinMaxScaling"
+    Z_SCORE = "ZScoreScaling"
 
 
 class Scaling(ABC):
@@ -16,6 +21,21 @@ class Scaling(ABC):
     def fit_transform(self, df: pl.DataFrame, features: list[str]) -> pl.DataFrame:
         pass
 
+    def __repr__(self):
+        return f"{self.__class__.__name__}"
+
+
+class ScalingFactory:
+    def create_scaling(self, scaling_type: ScalingAlgorithmTypes, *args, **kwargs) -> Scaling:
+        match scaling_type:
+            case ScalingAlgorithmTypes.MIN_MAX:
+                return MinMaxScaling(*args, **kwargs)
+            case ScalingAlgorithmTypes.Z_SCORE:
+                return ZScoreScaling(*args, **kwargs)
+            case _:
+                return ValueError(
+                    f"Invalid Scaling type, choose one of the available options from {' '.join(list(ScalingAlgorithmTypes.__members__.keys()))}"
+                )
 
 class MinMaxScaling(Scaling):
     def __init__(self):

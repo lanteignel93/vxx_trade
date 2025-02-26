@@ -1,12 +1,33 @@
-from abc import ABC, abstractmethod
+from __future__ import annotations
+from abc import ABC
+from enum import Enum
 import polars as pl
 from sklearn.ensemble import RandomForestClassifier
 from skopt import BayesSearchCV
 from skopt.space import Real, Categorical, Integer
 from xgboost import XGBClassifier
+from typing import NewType, Union
+
+ClassifierType = NewType("ClassifierType", Union[RandomForestClassifier, XGBClassifier, BayesSearchCV])
+
+class ClassifierAlgorithmTypes(Enum):
+    RANDOM_FOREST_SIMPLE = "RandomForestClassifierSimple"
+    RANDOM_FOREST_CV = "RandomForestClassifierCV"
+    XGB_CV = "XGBClassifierCV"
 
 
 class ClassifierModel(ABC):
+    def __init__(self, *args, **kwargs):
+        self.model = None
+
+    @property
+    def model(self):
+        return self._model
+
+    @model.setter
+    def model(self, model: ClassifierType) -> ClassifierType:
+        self._model = model
+
     def fit(self, df: pl.DataFrame, features: list[str], target: str) -> None:
         self.model.fit(df.select(features), df.get_column(target))
 
@@ -16,6 +37,19 @@ class ClassifierModel(ABC):
 
     def __repr__(self):
         return f"{self.__class__.__name__}"
+
+
+class ClassifierFactory:
+    def create_classifier(self, classifier_type: ClassifierAlgorithmTypes, *args, **kwargs) -> ClassifierModel:
+        match classifier_type:
+            case ClassifierAlgorithmTypes.RANDOM_FOREST_SIMPLE:
+                return RandomForestClassifierSimple(*args, **kwargs)
+            case ClassifierAlgorithmTypes.RANDOM_FOREST_CV:
+                return RandomForestClassifierCV(*args, **kwargs)
+            case ClassifierAlgorithmTypes.XGB_CV:
+                return XGBClassifierCV(*args, **kwargs)
+            case _:
+                return ValueError(f"Invalid Classifier type, choose one of the available options from {' '.join(list(ClassifierAlgorithmTypes.__members__.keys()))}")
 
 
 class RandomForestClassifierSimple(ClassifierModel):
