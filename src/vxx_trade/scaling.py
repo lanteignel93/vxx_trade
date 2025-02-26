@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from abc import ABC, abstractmethod
 import polars as pl
 
+
 class ScalingAlgorithmTypes(CustomEnum):
     MIN_MAX = "MinMaxScaling"
     Z_SCORE = "ZScoreScaling"
@@ -32,7 +33,9 @@ class Scaler(ABC):
 
 
 class ScalingFactory:
-    def create_scaling(self, scaling_type: ScalingAlgorithmTypes, *args, **kwargs) -> Scaler:
+    def create_scaling(
+        self, scaling_type: ScalingAlgorithmTypes, *args, **kwargs
+    ) -> Scaler:
         match scaling_type:
             case ScalingAlgorithmTypes.MIN_MAX:
                 return MinMaxScaling(*args, **kwargs)
@@ -42,6 +45,7 @@ class ScalingFactory:
                 return ValueError(
                     f"Invalid Scaling type, choose one of the available options from {' '.join(list(ScalingAlgorithmTypes.__members__.keys()))}"
                 )
+
 
 class MinMaxScaling(Scaler):
     def __init__(self):
@@ -91,7 +95,7 @@ class ZScoreScaling(Scaler):
         self._std: pl.Series = None
 
     @property
-    def mean(self)-> pl.Series:
+    def mean(self) -> pl.Series:
         return self._mean
 
     @property

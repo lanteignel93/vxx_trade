@@ -13,7 +13,7 @@ from target import *
 
 @dataclass
 class BacktesterConfig:
-    target: str 
+    target: str
     features: list[str]
     walkforward_parameters: WFTrainTestGeneratorParameters
     winsorization_parameters: WinsorizationParameters
@@ -26,7 +26,7 @@ class BacktesterConfig:
 class Backtester(BacktesterConfig):
     def __init__(self, config: BacktesterConfig, datagen: DataGenerator | None = None):
         super().__init__(**asdict(config))
-        self._data: DataGenerator = None 
+        self._data: DataGenerator = None
         self._df: pl.DataFrame = None
         self._get_data(datagen)
         self._wf: WFTrainTestGenerator = self._generate_walkforward()
@@ -44,7 +44,7 @@ class Backtester(BacktesterConfig):
     def data(self, value: DataGenerator):
         self._data = value
 
-    @property 
+    @property
     def df(self) -> pl.DataFrame:
         return self._df
 
@@ -124,18 +124,22 @@ class Backtester(BacktesterConfig):
             test = self.classifier.predict(test, self.features)
 
             print(test.select(["date", "target", "target_rank", "prediction"]))
-            print(train.select(["date", "target", "target_rank", "prediction"]).describe())
-            print(test.select(["date", "target", "target_rank", "prediction"]).describe())
+            print(
+                train.select(["date", "target", "target_rank", "prediction"]).describe()
+            )
+            print(
+                test.select(["date", "target", "target_rank", "prediction"]).describe()
+            )
 
             # print(classification_report(test["target"], preds))
             # print(confusion_matrix(test["target"], preds))
             # print("\n")
             break
-        
+
     def _get_data(self, datagen: DataGenerator | None = None):
         if not datagen:
             self.data = generate_data_for_strategy(verbose=False)
-        else: 
+        else:
             self.data = datagen
         self._df = self.data()
 
@@ -145,29 +149,28 @@ class Backtester(BacktesterConfig):
     def _generate_scaler(self):
         scaling_factory = ScalingFactory()
         self.scaler = scaling_factory.create_scaling(
-            self.scaling_parameters.scaling_type,
-            **self.scaling_parameters.kwargs
+            self.scaling_parameters.scaling_type, **self.scaling_parameters.kwargs
         )
 
     def _generate_winsorization(self):
         winsorization_factory = WinsorizationFactory()
         self.winsorization = winsorization_factory.create_winsorization(
             self.winsorization_parameters.winsorization_type,
-            **self.winsorization_parameters.kwargs
+            **self.winsorization_parameters.kwargs,
         )
 
     def _generate_clustering(self):
         clustering_factory = ClusteringFactory()
         self.clustering = clustering_factory.create_clustering(
             self.clustering_parameters.clustering_type,
-            **self.clustering_parameters.kwargs
+            **self.clustering_parameters.kwargs,
         )
 
     def _generate_classifier(self):
         classifier_factory = ClassifierFactory()
         self.classifier = classifier_factory.create_classifier(
             self.classifier_parameters.classifier_type,
-            **self.classifier_parameters.kwargs
+            **self.classifier_parameters.kwargs,
         )
 
     def _generate_target_ranker(self):
@@ -191,11 +194,15 @@ class BacktesterBuilder(ABC):
         pass
 
     @abstractmethod
-    def set_walkforward_parameters(self, walkforward_parameters: WFTrainTestGeneratorParameters):
+    def set_walkforward_parameters(
+        self, walkforward_parameters: WFTrainTestGeneratorParameters
+    ):
         pass
 
     @abstractmethod
-    def set_winsorization_parameters(self, winsorization_parameters: WinsorizationParameters):
+    def set_winsorization_parameters(
+        self, winsorization_parameters: WinsorizationParameters
+    ):
         pass
 
     @abstractmethod
@@ -211,7 +218,9 @@ class BacktesterBuilder(ABC):
         pass
 
     @abstractmethod
-    def set_target_ranker_parameters(self, target_ranker_parameters: TargetRankerParameters):
+    def set_target_ranker_parameters(
+        self, target_ranker_parameters: TargetRankerParameters
+    ):
         pass
 
 
@@ -244,48 +253,48 @@ class BacktesterBuilderExample(BacktesterBuilder):
 
     def set_features(self):
         self._config.features = [
-        "vix_cp",
-        "vvix_cp",
-        "vol_ts",
-        "vix_cp_ewma_zscore",
-        "vvix_cp_ewma_zscore",
-        "vol_ts_ewma_zscore",
-    ]
+            "vix_cp",
+            "vvix_cp",
+            "vol_ts",
+            "vix_cp_ewma_zscore",
+            "vvix_cp_ewma_zscore",
+            "vol_ts_ewma_zscore",
+        ]
 
     def set_walkforward_parameters(self):
         self._config.walkforward_parameters = WFTrainTestGeneratorParameters(
             eval_frequency=EvalFrequency.MONTHLY,
-            start_eval_date=datetime.date(2016,1,1)
+            start_eval_date=datetime.date(2016, 1, 1),
         )
 
     def set_winsorization_parameters(self):
         self._config.winsorization_parameters = WinsorizationParameters(
             winsorization_type=WinsorizationAlgorithmTypes.MAD,
-            kwargs={"mad_multiplier": 3}
+            kwargs={"mad_multiplier": 3},
         )
 
     def set_scaling_parameters(self):
         self._config.scaling_parameters = ScalingParameters(
-            scaling_type=ScalingAlgorithmTypes.MIN_MAX,
-            kwargs={}
+            scaling_type=ScalingAlgorithmTypes.MIN_MAX, kwargs={}
         )
 
     def set_clustering_parameters(self):
         self._config.clustering_parameters = ClusteringParameters(
             clustering_type=ClusteringAlgorithmTypes.HIERARCHICAL,
-            kwargs={"n_clusters": 10, "random_state": 42}
+            kwargs={"n_clusters": 10, "random_state": 42},
         )
 
     def set_classifier_parameters(self):
         self._config.classifier_parameters = ClassifierParameters(
             classifier_type=ClassifierAlgorithmTypes.RANDOM_FOREST_SIMPLE,
-            kwargs={"random_state": 42}
+            kwargs={"random_state": 42},
         )
 
     def set_target_ranker_parameters(self):
         self._config.target_ranker_parameters = TargetRankerParameters(
-            kwargs={'n_bins': 10}
+            kwargs={"n_bins": 10}
         )
+
 
 if __name__ == "__main__":
     builder = BacktesterBuilderExample()

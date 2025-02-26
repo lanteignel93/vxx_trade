@@ -9,7 +9,9 @@ from xgboost import XGBClassifier
 from typing import NewType, Union
 from dataclasses import dataclass
 
-ClassifierType = NewType("ClassifierType", Union[RandomForestClassifier, XGBClassifier, BayesSearchCV])
+ClassifierType = NewType(
+    "ClassifierType", Union[RandomForestClassifier, XGBClassifier, BayesSearchCV]
+)
 
 
 class ClassifierAlgorithmTypes(CustomEnum):
@@ -48,7 +50,9 @@ class ClassifierModel(ABC):
 
 
 class ClassifierFactory:
-    def create_classifier(self, classifier_type: ClassifierAlgorithmTypes, *args, **kwargs) -> ClassifierModel:
+    def create_classifier(
+        self, classifier_type: ClassifierAlgorithmTypes, *args, **kwargs
+    ) -> ClassifierModel:
         match classifier_type:
             case ClassifierAlgorithmTypes.RANDOM_FOREST_SIMPLE:
                 return RandomForestClassifierSimple(*args, **kwargs)
@@ -57,7 +61,9 @@ class ClassifierFactory:
             case ClassifierAlgorithmTypes.XGB_CV:
                 return XGBClassifierCV(*args, **kwargs)
             case _:
-                return ValueError(f"Invalid Classifier type, choose one of the available options from {' '.join(list(ClassifierAlgorithmTypes.__members__.keys()))}")
+                return ValueError(
+                    f"Invalid Classifier type, choose one of the available options from {' '.join(list(ClassifierAlgorithmTypes.__members__.keys()))}"
+                )
 
 
 class RandomForestClassifierSimple(ClassifierModel):

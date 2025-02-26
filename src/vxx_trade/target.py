@@ -50,25 +50,24 @@ class TargetRanker:
         self.fit(df)
         return self.transform(df)
 
+
 # TODO: Fix this implementation below into a class that can be used in the pipeline
-def create_classification_target(df: pl.DataFrame, group_column: str, target: str) -> pl.DataFrame:
-    return  (
-        df.with_columns(
+def create_classification_target(
+    df: pl.DataFrame, group_column: str, target: str
+) -> pl.DataFrame:
+    return df.with_columns(
         pl.lit(16)
         .mul(pl.col(target))
         .truediv((pl.col("group_vol").truediv(pl.col("group_count")).sqrt()))
         .alias("target")
         .over(group_column)
-        )
     )
 
+
 def create_target(df: pl.DataFrame, group_column: str, target: str) -> pl.DataFrame:
-    df = (
-        df.with_columns(
-            pl.col(target).pow(2).sum().alias("group_vol").over(group_column)
-        )
-        .with_columns(pl.col(target).count().alias("group_count").over(group_column))
-    )
+    df = df.with_columns(
+        pl.col(target).pow(2).sum().alias("group_vol").over(group_column)
+    ).with_columns(pl.col(target).count().alias("group_count").over(group_column))
     return create_classification_target(df, group_column, target)
 
 

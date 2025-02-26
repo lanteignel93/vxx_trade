@@ -4,6 +4,7 @@ from vxx_trade.data_generator import generate_data_for_strategy
 import polars as pl
 from dataclasses import dataclass
 
+
 class EvalFrequency(Enum):
     MONTHLY = "MONTHLY"
     QUARTERLY = "QUARTERLY"

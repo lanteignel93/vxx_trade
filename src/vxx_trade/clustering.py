@@ -7,13 +7,15 @@ from sklearn.mixture import GaussianMixture
 from typing import NewType, Union
 from dataclasses import dataclass
 
-ClusterType = NewType("ClusterType", Union[KMeans, AgglomerativeClustering, GaussianMixture])
+ClusterType = NewType(
+    "ClusterType", Union[KMeans, AgglomerativeClustering, GaussianMixture]
+)
 
 
 class ClusteringAlgorithmTypes(CustomEnum):
     KMEANS = "KMeansClustering"
-    HIERARCHICAL = 'HierarchicalClustering'
-    GMM = 'GMMClustering'
+    HIERARCHICAL = "HierarchicalClustering"
+    GMM = "GMMClustering"
 
 
 @dataclass
@@ -59,7 +61,9 @@ class ClusteringAlgorithm(ABC):
 
 
 class ClusteringFactory:
-    def create_clustering(self, clustering_type: ClusteringAlgorithmTypes, *args, **kwargs) -> ClusteringAlgorithm:
+    def create_clustering(
+        self, clustering_type: ClusteringAlgorithmTypes, *args, **kwargs
+    ) -> ClusteringAlgorithm:
         match clustering_type:
             case ClusteringAlgorithmTypes.KMEANS:
                 return KMeansClustering(*args, **kwargs)
@@ -68,8 +72,9 @@ class ClusteringFactory:
             case ClusteringAlgorithmTypes.GMM:
                 return GMMClustering(*args, **kwargs)
             case _:
-                return ValueError(f"Wrong clustering type, choose one of the available options between {' '.join(list(ClusteringAlgorithmTypes.__members__.keys()))
-}")
+                return ValueError(
+                    f"Wrong clustering type, choose one of the available options between {' '.join(list(ClusteringAlgorithmTypes.__members__.keys()))}"
+                )
 
 
 class KMeansClustering(ClusteringAlgorithm):
@@ -90,4 +95,3 @@ class GMMClustering(ClusteringAlgorithm):
         self._model = GaussianMixture(
             n_components=n_clusters, random_state=random_state
         )
-

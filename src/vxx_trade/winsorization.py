@@ -34,7 +34,9 @@ class WinsorizationParameters:
 
 
 class WinsorizationFactory:
-    def create_winsorization(self, winsorization_type: WinsorizationAlgorithmTypes, *args, **kwargs) -> Winsorization:
+    def create_winsorization(
+        self, winsorization_type: WinsorizationAlgorithmTypes, *args, **kwargs
+    ) -> Winsorization:
         match winsorization_type:
             case WinsorizationAlgorithmTypes.MAD:
                 return MADWinsorization(*args, **kwargs)
@@ -46,6 +48,7 @@ class WinsorizationFactory:
                 return ValueError(
                     f"Invalid Winsorization type, choose one of the available options from {' '.join(list(WinsorizationAlgorithmTypes.__members__.keys()))}"
                 )
+
 
 class MADWinsorization(Winsorization):
     def __init__(self, mad_multiplier: int):
@@ -71,7 +74,6 @@ class MADWinsorization(Winsorization):
             mad = (df.get_column(feature) - median).abs().median()
             self.mad[feature] = mad
             self.median[feature] = median
-
 
     def transform(self, df: pl.DataFrame, features: list[str]) -> pl.DataFrame:
         for feature in features:
@@ -129,15 +131,17 @@ class ZScoreWinsorization(Winsorization):
                 pl.when(
                     pl.col(feature)
                     < (self.mean[feature] - self.zscore_threshold * self.std[feature])
-                ).then(self.mean[feature] - self.zscore_threshold * self.std[feature])
+                )
+                .then(self.mean[feature] - self.zscore_threshold * self.std[feature])
                 .otherwise(
                     pl.when(
                         pl.col(feature)
-                        > self.mean[feature]
-                        + self.zscore_threshold * self.std[feature]
-                ).then(
+                        > self.mean[feature] + self.zscore_threshold * self.std[feature]
+                    )
+                    .then(
                         self.mean[feature] + self.zscore_threshold * self.std[feature]
-                    ).otherwise(pl.col(feature))
+                    )
+                    .otherwise(pl.col(feature))
                 )
                 .alias(f"{feature}_zscorewinsorized")
             )
@@ -183,16 +187,14 @@ class PercentileWinsorization(Winsorization):
     def transform(self, df: pl.DataFrame, features: list[str]) -> pl.DataFrame:
         for feature in features:
             df = df.with_columns(
-                pl.when(
-                    pl.col(feature) < self.lower_bound[feature]
-                ).then(
-                    self.lower_bound[feature]
-                ).otherwise(
-                    pl.when(
-                        pl.col(feature) > self.upper_bound[feature]
-                    ).then(
+                pl.when(pl.col(feature) < self.lower_bound[feature])
+                .then(self.lower_bound[feature])
+                .otherwise(
+                    pl.when(pl.col(feature) > self.upper_bound[feature])
+                    .then(
                         self.upper_bound[feature],
-                    ).otherwise(pl.col(feature))
+                    )
+                    .otherwise(pl.col(feature))
                 )
                 .alias(f"{feature}_percentilewinsorized")
             )
