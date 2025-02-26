@@ -1,35 +1,43 @@
 from __future__ import annotations
 from abc import ABC
-from enum import Enum
+from _utils import CustomEnum
 import polars as pl
 from sklearn.cluster import KMeans, AgglomerativeClustering
 from sklearn.mixture import GaussianMixture
 from typing import NewType, Union
+from dataclasses import dataclass
 
 ClusterType = NewType("ClusterType", Union[KMeans, AgglomerativeClustering, GaussianMixture])
 
-class ClusteringAlgorithmTypes(Enum):
+
+class ClusteringAlgorithmTypes(CustomEnum):
     KMEANS = "KMeansClustering"
     HIERARCHICAL = 'HierarchicalClustering'
     GMM = 'GMMClustering'
+
+
+@dataclass
+class ClusteringParameters:
+    clustering_type: ClusteringAlgorithmTypes
+    kwargs: dict
 
 
 class ClusteringAlgorithm(ABC):
     def __init__(self, n_clusters: int, name: str):
         self._n_clusters = n_clusters
         self._name = name
-        self._model = None
+        self._model: ClusterType = None
 
     @property
-    def n_clusters(self):
+    def n_clusters(self) -> int:
         return self._n_clusters
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self._name
 
     @property
-    def model(self):
+    def model(self) -> ClusterType:
         return self._model
 
     @model.setter

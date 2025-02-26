@@ -1,5 +1,12 @@
 import numpy as np
 import polars as pl
+from dataclasses import dataclass
+
+
+@dataclass
+class TargetRankerParameters:
+    kwargs: dict
+
 
 class TargetRanker:
     def __init__(self, n_bins: int = 10, target: str = "target"):
@@ -8,15 +15,15 @@ class TargetRanker:
         self._bin_edges: np.ndarray = None
 
     @property
-    def target(self):
+    def target(self) -> str:
         return self._target
 
     @property
-    def n_bins(self):
+    def n_bins(self) -> int:
         return self._n_bins
 
     @property
-    def bin_edges(self):
+    def bin_edges(self) -> np.ndarray:
         return self._bin_edges
 
     @bin_edges.setter
@@ -43,31 +50,29 @@ class TargetRanker:
         self.fit(df)
         return self.transform(df)
 
-
-def create_target(df: pl.DataFrame, group_column: str, target: str) -> pl.DataFrame:
-    return (
+# TODO: Fix this implementation below into a class that can be used in the pipeline
+def create_classification_target(df: pl.DataFrame, group_column: str, target: str) -> pl.DataFrame:
+    return  (
         df.with_columns(
-            pl.col(target).pow(2).sum().alias("group_vol").over(group_column)
-        )
-        .with_columns(pl.col(target).count().alias("group_count").over(group_column))
-        .with_columns(
-            pl.lit(16)
-            .mul(pl.col(target))
-            .truediv((pl.col("group_vol").truediv(pl.col("group_count")).sqrt()))
-            .alias("target")
-            .over(group_column)
-        )
-    )
-
-
-def compute_target(train, test, group_column: str, target: str) -> pl.DataFrame:
-    train = train.select(["group_vol", "group_count", group_column]).unique()
-    test = test.join(train, on=group_column, how="left")
-    return test.with_columns(
         pl.lit(16)
         .mul(pl.col(target))
         .truediv((pl.col("group_vol").truediv(pl.col("group_count")).sqrt()))
         .alias("target")
         .over(group_column)
+        )
     )
 
+def create_target(df: pl.DataFrame, group_column: str, target: str) -> pl.DataFrame:
+    df = (
+        df.with_columns(
+            pl.col(target).pow(2).sum().alias("group_vol").over(group_column)
+        )
+        .with_columns(pl.col(target).count().alias("group_count").over(group_column))
+    )
+    return create_classification_target(df, group_column, target)
+
+
+def compute_target(train, test, group_column: str, target: str) -> pl.DataFrame:
+    train = train.select(["group_vol", "group_count", group_column]).unique()
+    test = test.join(train, on=group_column, how="left")
+    return create_classification_target(test, group_column, target)

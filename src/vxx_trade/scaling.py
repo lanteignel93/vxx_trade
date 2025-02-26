@@ -1,14 +1,20 @@
-from enum import Enum
+from _utils import CustomEnum
+from dataclasses import dataclass
 from abc import ABC, abstractmethod
 import polars as pl
 
-class ScalingAlgorithmTypes(Enum):
+class ScalingAlgorithmTypes(CustomEnum):
     MIN_MAX = "MinMaxScaling"
     Z_SCORE = "ZScoreScaling"
 
 
-class Scaling(ABC):
+@dataclass
+class ScalingParameters:
+    scaling_type: ScalingAlgorithmTypes
+    kwargs: dict
 
+
+class Scaler(ABC):
     @abstractmethod
     def fit(self, df: pl.DataFrame, features: list[str]) -> None:
         pass
@@ -26,7 +32,7 @@ class Scaling(ABC):
 
 
 class ScalingFactory:
-    def create_scaling(self, scaling_type: ScalingAlgorithmTypes, *args, **kwargs) -> Scaling:
+    def create_scaling(self, scaling_type: ScalingAlgorithmTypes, *args, **kwargs) -> Scaler:
         match scaling_type:
             case ScalingAlgorithmTypes.MIN_MAX:
                 return MinMaxScaling(*args, **kwargs)
@@ -37,17 +43,17 @@ class ScalingFactory:
                     f"Invalid Scaling type, choose one of the available options from {' '.join(list(ScalingAlgorithmTypes.__members__.keys()))}"
                 )
 
-class MinMaxScaling(Scaling):
+class MinMaxScaling(Scaler):
     def __init__(self):
-        self._min = None
-        self._max = None
+        self._min: pl.Series = None
+        self._max: pl.Series = None
 
     @property
-    def min(self):
+    def min(self) -> pl.Series:
         return self._min
 
     @property
-    def max(self):
+    def max(self) -> pl.Series:
         return self._max
 
     @min.setter
@@ -79,17 +85,17 @@ class MinMaxScaling(Scaling):
         return self.transform(df, features)
 
 
-class ZScoreScaling(Scaling):
+class ZScoreScaling(Scaler):
     def __init__(self):
-        self._mean = None
-        self._std = None
+        self._mean: pl.Series = None
+        self._std: pl.Series = None
 
     @property
-    def mean(self):
+    def mean(self)-> pl.Series:
         return self._mean
 
     @property
-    def std(self):
+    def std(self) -> pl.Series:
         return self._std
 
     @mean.setter

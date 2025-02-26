@@ -2,7 +2,7 @@ import datetime
 from enum import Enum
 from vxx_trade.data_generator import generate_data_for_strategy
 import polars as pl
-
+from dataclasses import dataclass
 
 class EvalFrequency(Enum):
     MONTHLY = "MONTHLY"
@@ -11,12 +11,18 @@ class EvalFrequency(Enum):
     ANNUALLY = "ANNUALLY"
 
 
+@dataclass
+class WFTrainTestGeneratorParameters:
+    eval_frequency: EvalFrequency
+    start_eval_date: datetime.date
+
+
 class WFTrainTestGenerator:
     def __init__(
         self,
-        eval_frequency: EvalFrequency,
         df: pl.DataFrame,
-        start_eval_date: datetime.datetime,
+        eval_frequency: EvalFrequency,
+        start_eval_date: datetime.date,
     ):
         self.eval_frequency = eval_frequency
         self.days_skipped = None

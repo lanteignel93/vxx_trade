@@ -1,27 +1,35 @@
 from __future__ import annotations
 from abc import ABC
-from enum import Enum
+from _utils import CustomEnum
 import polars as pl
 from sklearn.ensemble import RandomForestClassifier
 from skopt import BayesSearchCV
 from skopt.space import Real, Categorical, Integer
 from xgboost import XGBClassifier
 from typing import NewType, Union
+from dataclasses import dataclass
 
 ClassifierType = NewType("ClassifierType", Union[RandomForestClassifier, XGBClassifier, BayesSearchCV])
 
-class ClassifierAlgorithmTypes(Enum):
-    RANDOM_FOREST_SIMPLE = "RandomForestClassifierSimple"
-    RANDOM_FOREST_CV = "RandomForestClassifierCV"
-    XGB_CV = "XGBClassifierCV"
+
+class ClassifierAlgorithmTypes(CustomEnum):
+    RANDOM_FOREST_SIMPLE = "RANDOM_FOREST_SIMPLE"
+    RANDOM_FOREST_CV = "RANDOM_FOREST_CV"
+    XGB_CV = "XGB_CV"
+
+
+@dataclass
+class ClassifierParameters:
+    classifier_type: ClassifierAlgorithmTypes
+    kwargs: dict
 
 
 class ClassifierModel(ABC):
     def __init__(self, *args, **kwargs):
-        self.model = None
+        self._model = None
 
     @property
-    def model(self):
+    def model(self) -> ClassifierType:
         return self._model
 
     @model.setter
@@ -29,10 +37,10 @@ class ClassifierModel(ABC):
         self._model = model
 
     def fit(self, df: pl.DataFrame, features: list[str], target: str) -> None:
-        self.model.fit(df.select(features), df.get_column(target))
+        self._model.fit(df.select(features), df.get_column(target))
 
     def predict(self, df: pl.DataFrame, features: list[str]) -> pl.DataFrame:
-        pred = self.model.predict(df.select(features))
+        pred = self._model.predict(df.select(features))
         return df.with_columns(pl.Series(pred).alias("prediction"))
 
     def __repr__(self):
@@ -56,7 +64,7 @@ class RandomForestClassifierSimple(ClassifierModel):
     def __init__(self, n_estimators: int = 100, random_state: int = 42):
         self.n_estimators = n_estimators
         self.random_state = random_state
-        self.model = RandomForestClassifier(
+        self._model = RandomForestClassifier(
             n_estimators=self.n_estimators, random_state=self.random_state
         )
 
@@ -86,7 +94,7 @@ class RandomForestClassifierCV(ClassifierModel):
         self.n_iter = n_iter
         self.scoring = scoring
         self.verbose = verbose
-        self.model = BayesSearchCV(
+        self._model = BayesSearchCV(
             RandomForestClassifier(),
             search_spaces=self.params,
             cv=self.cv,
@@ -121,7 +129,7 @@ class XGBClassifierCV(ClassifierModel):
         self.n_iter = n_iter
         self.scoring = scoring
         self.verbose = verbose
-        self.model = BayesSearchCV(
+        self._model = BayesSearchCV(
             XGBClassifier(),
             search_spaces=self.params,
             cv=self.cv,

@@ -1,14 +1,16 @@
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 import polars as pl
-from enum import Enum
+from _utils import CustomEnum
 
-class WinsorizationAlgorithmTypes(Enum):
+
+class WinsorizationAlgorithmTypes(CustomEnum):
     MAD = "MADWinsorization"
     Z_SCORE = "ZScoreWinsorization"
     PERCENTILE = "PercentileWinsorization"
 
-class Winsorization(ABC):
 
+class Winsorization(ABC):
     @abstractmethod
     def fit(self, df: pl.DataFrame, features: list[str]) -> None:
         pass
@@ -23,6 +25,13 @@ class Winsorization(ABC):
 
     def __repr__(self):
         return f"{self.__class__.__name__}"
+
+
+@dataclass
+class WinsorizationParameters:
+    winsorization_type: WinsorizationAlgorithmTypes
+    kwargs: dict
+
 
 class WinsorizationFactory:
     def create_winsorization(self, winsorization_type: WinsorizationAlgorithmTypes, *args, **kwargs) -> Winsorization:
@@ -45,15 +54,15 @@ class MADWinsorization(Winsorization):
         self._median: dict = {}
 
     @property
-    def mad_multiplier(self):
+    def mad_multiplier(self) -> int:
         return self._mad_multiplier
 
     @property
-    def mad(self):
+    def mad(self) -> dict:
         return self._mad
 
     @property
-    def median(self):
+    def median(self) -> dict:
         return self._median
 
     def fit(self, df: pl.DataFrame, features: list[str]) -> None:
@@ -62,17 +71,7 @@ class MADWinsorization(Winsorization):
             mad = (df.get_column(feature) - median).abs().median()
             self.mad[feature] = mad
             self.median[feature] = median
-            lower_bound = median - self.mad_multiplier * mad
-            upper_bound = median + self.mad_multiplier * mad
-            df = df.with_columns(
-                pl.when(df.get_column(feature) < lower_bound)
-                .then(lower_bound)
-                .when(df.get_column(feature) > upper_bound)
-                .then(upper_bound)
-                .otherwise(df.get_column(feature))
-                .alias(feature)
-            )
-        return df
+
 
     def transform(self, df: pl.DataFrame, features: list[str]) -> pl.DataFrame:
         for feature in features:
@@ -101,7 +100,7 @@ class MADWinsorization(Winsorization):
         return self.transform(df, features)
 
 
-class ZScoreWinzorization(Winsorization):
+class ZScoreWinsorization(Winsorization):
     def __init__(self, zscore_threshold: int):
         self.zscore_threshold = zscore_threshold
         self.mean: dict = {}
@@ -112,28 +111,17 @@ class ZScoreWinzorization(Winsorization):
         return self._zscore_threshold
 
     @property
-    def mean(self):
+    def mean(self) -> dict:
         return self._median
 
     @property
-    def std(self):
+    def std(self) -> dict:
         return self._std
 
     def fit(self, df: pl.DataFrame, features: list[str]) -> None:
         for feature in features:
             self.mean[feature] = df.get_column(feature).mean()
             self.std[feature] = df.get_column(feature).std()
-            lower_bound = self.mean[feature] - self.zscore_threshold * self.std[feature]
-            upper_bound = self.mean[feature] + self.zscore_threshold * self.std[feature]
-            df = df.with_columns(
-                pl.when(df.get_column(feature) < lower_bound)
-                .then(lower_bound)
-                .when(df.get_column(feature) > upper_bound)
-                .then(upper_bound)
-                .otherwise(df.get_column(feature))
-                .alias(feature)
-            )
-        return df
 
     def transform(self, df: pl.DataFrame, features: list[str]) -> pl.DataFrame:
         for feature in features:
@@ -162,10 +150,26 @@ class ZScoreWinzorization(Winsorization):
 
 class PercentileWinsorization(Winsorization):
     def __init__(self, lower_percentile: int, upper_percentile: int):
-        self.lower_percentile = lower_percentile
-        self.upper_percentile = upper_percentile
-        self.lower_bound: dict = {}
-        self.upper_bound: dict = {}
+        self._lower_percentile = lower_percentile
+        self._upper_percentile = upper_percentile
+        self._lower_bound: dict = {}
+        self._upper_bound: dict = {}
+
+    @property
+    def lower_percentile(self) -> int:
+        return self._lower_percentile
+
+    @property
+    def upper_percentile(self) -> int:
+        return self._upper_percentile
+
+    @property
+    def lower_bound(self) -> dict:
+        return self._lower_bound
+
+    @property
+    def upper_bound(self) -> dict:
+        return self._upper_bound
 
     def fit(self, df: pl.DataFrame, features: list[str]) -> None:
         for feature in features:
@@ -175,15 +179,6 @@ class PercentileWinsorization(Winsorization):
             self.upper_bound[feature] = df.get_column(feature).quantile(
                 self.upper_percentile
             )
-            df = df.with_columns(
-                pl.when(df.get_column(feature) < self.lower_bound[feature])
-                .then(self.lower_bound[feature])
-                .when(df.get_column(feature) > self.upper_bound[feature])
-                .then(self.upper_bound[feature])
-                .otherwise(df.get_column(feature))
-                .alias(feature)
-            )
-        return df
 
     def transform(self, df: pl.DataFrame, features: list[str]) -> pl.DataFrame:
         for feature in features:
