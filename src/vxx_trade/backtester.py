@@ -1,4 +1,4 @@
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, fields
 from abc import ABC, abstractmethod
 import datetime
 import numpy as np
@@ -46,14 +46,25 @@ from target import (
 
 @dataclass
 class BacktesterConfig:
-    target: str
-    features: list[str]
-    walkforward_parameters: WFTrainTestGeneratorParameters
-    winsorization_parameters: WinsorizationParameters
-    scaling_parameters: ScalingParameters
-    clustering_parameters: ClusteringParameters
-    classifier_parameters: ClassifierParameters
-    target_ranker_parameters: TargetRankerParameters
+    target: str = None
+    features: list[str] = None
+    walkforward_parameters: WFTrainTestGeneratorParameters = None
+    winsorization_parameters: WinsorizationParameters = None
+    scaling_parameters: ScalingParameters = None
+    clustering_parameters: ClusteringParameters = None
+    classifier_parameters: ClassifierParameters = None
+    target_ranker_parameters: TargetRankerParameters = None
+
+    def __iter__(self):
+        return iter(self.__dict__.values())
+
+    def __post_init__(self):
+        for field in fields(self):
+            value = getattr(self, field.name)
+            if isinstance(value, dict) and field.type is not dict:
+                setattr(self, field.name, field.type(**value))
+
+
 
 
 class Backtester(BacktesterConfig):
@@ -65,7 +76,7 @@ class Backtester(BacktesterConfig):
         self._wf: WFTrainTestGenerator = self._generate_walkforward()
         self._scaler: Scaler = self._generate_scaler()
         self._winsorization: Winsorization = self._generate_winsorization()
-        self._clustring: ClusteringAlgorithm = self._generate_clustering()
+        self._cluster: ClusteringAlgorithm = self._generate_clustering()
         self._classifier: ClassifierModel = self._generate_classifier()
         self._target_ranker: TargetRanker = self._generate_target_ranker()
 
@@ -110,12 +121,12 @@ class Backtester(BacktesterConfig):
         self._winsorization = value
 
     @property
-    def clustering(self) -> ClusteringAlgorithm:
-        return self._clustering
+    def cluster(self) -> ClusteringAlgorithm:
+        return self._cluster
 
-    @clustering.setter
-    def clustering(self, value: ClusteringAlgorithm):
-        self._clustering = value
+    @cluster.setter
+    def cluster(self, value: ClusteringAlgorithm):
+        self._cluster = value
 
     @property
     def classifier(self) -> ClassifierModel:
@@ -146,8 +157,8 @@ class Backtester(BacktesterConfig):
             train = self.cluster.predict(train, self.features)
             test = self.cluster.predict(test, self.features)
 
-            train = create_target(train, self.clustering.name)
-            test = compute_target(train, test, self.clustering.name)
+            train = create_target(train, self.cluster.name, self.target)
+            test = compute_target(train, test, self.cluster.name, self.target)
 
             train = self.target_ranker.fit_transform(train)
             test = self.target_ranker.transform(test)
@@ -176,38 +187,38 @@ class Backtester(BacktesterConfig):
             self.data = datagen
         self.df = self.data()
 
-    def _generate_walkforward(self):
-        self.wf = WFTrainTestGenerator(df=self.df, **self.walkforward_parameters)
+    def _generate_walkforward(self) -> WFTrainTestGenerator:
+        return WFTrainTestGenerator(df=self.df, **asdict(self.walkforward_parameters))
 
-    def _generate_scaler(self):
+    def _generate_scaler(self) -> Scaler:
         scaling_factory = ScalingFactory()
-        self.scaler = scaling_factory.create_scaling(
+        return scaling_factory.create_scaling(
             self.scaling_parameters.scaling_type, **self.scaling_parameters.kwargs
         )
 
-    def _generate_winsorization(self):
+    def _generate_winsorization(self) -> Winsorization:
         winsorization_factory = WinsorizationFactory()
-        self.winsorization = winsorization_factory.create_winsorization(
+        return winsorization_factory.create_winsorization(
             self.winsorization_parameters.winsorization_type,
             **self.winsorization_parameters.kwargs,
         )
 
-    def _generate_clustering(self):
+    def _generate_clustering(self) -> ClusteringAlgorithm:
         clustering_factory = ClusteringFactory()
-        self.clustering = clustering_factory.create_clustering(
+        return clustering_factory.create_clustering(
             self.clustering_parameters.clustering_type,
             **self.clustering_parameters.kwargs,
         )
 
-    def _generate_classifier(self):
+    def _generate_classifier(self) -> ClassifierModel:
         classifier_factory = ClassifierFactory()
-        self.classifier = classifier_factory.create_classifier(
+        return classifier_factory.create_classifier(
             self.classifier_parameters.classifier_type,
             **self.classifier_parameters.kwargs,
         )
 
-    def _generate_target_ranker(self):
-        self.target_ranker = TargetRanker(**self.target_ranker_parameters.kwargs)
+    def _generate_target_ranker(self) -> TargetRanker:
+        return TargetRanker(**self.target_ranker_parameters.kwargs)
 
     def __repr__(self):
         return f"{self.__class__.__name__}({self.target})"
@@ -313,7 +324,7 @@ class BacktesterBuilderExample(BacktesterBuilder):
 
     def set_clustering_parameters(self):
         self._config.clustering_parameters = ClusteringParameters(
-            clustering_type=ClusteringAlgorithmTypes.HIERARCHICAL,
+            clustering_type=ClusteringAlgorithmTypes.KMEANS,
             kwargs={"n_clusters": 10, "random_state": 42},
         )
 
