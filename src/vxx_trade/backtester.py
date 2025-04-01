@@ -1,14 +1,47 @@
 from dataclasses import dataclass, asdict
 from abc import ABC, abstractmethod
+import datetime
 import numpy as np
 import polars as pl
-from vxx_trade.data_generator import generate_data_for_strategy
-from clustering import *
-from walkforward import *
-from classifier import *
-from scaling import *
-from winsorization import *
-from target import *
+from vxx_trade.data_generator import  (
+    generate_data_for_strategy,
+    DataGenerator
+)
+from clustering import (
+    ClusteringParameters,
+    ClusteringAlgorithm,
+    ClusteringFactory,
+    ClusteringAlgorithmTypes
+)
+from walkforward import (
+    WFTrainTestGeneratorParameters,
+    WFTrainTestGenerator,
+    EvalFrequency
+)
+from classifier import (
+    ClassifierParameters,
+    ClassifierModel,
+    ClassifierFactory,
+    ClassifierAlgorithmTypes
+)
+from scaling import (
+    Scaler,
+    ScalingParameters,
+    ScalingFactory,
+    ScalingAlgorithmTypes
+)
+from winsorization import (
+    Winsorization,
+    WinsorizationParameters,
+    WinsorizationFactory,
+    WinsorizationAlgorithmTypes
+)
+from target import (
+    TargetRankerParameters,
+    TargetRanker,
+    create_target,
+    compute_target
+)
 
 
 @dataclass
@@ -61,11 +94,11 @@ class Backtester(BacktesterConfig):
         self._wf = value
 
     @property
-    def scaler(self) -> Scaling:
+    def scaler(self) -> Scaler:
         return self._scaler
 
     @scaler.setter
-    def scaler(self, value: Scaling):
+    def scaler(self, value: Scaler):
         self._scaler = value
 
     @property
@@ -113,8 +146,8 @@ class Backtester(BacktesterConfig):
             train = self.cluster.predict(train, self.features)
             test = self.cluster.predict(test, self.features)
 
-            train = create_target(train, cluster.name)
-            test = compute_target(train, test, cluster.name)
+            train = create_target(train, self.clustering.name)
+            test = compute_target(train, test, self.clustering.name)
 
             train = self.target_ranker.fit_transform(train)
             test = self.target_ranker.transform(test)
@@ -141,10 +174,10 @@ class Backtester(BacktesterConfig):
             self.data = generate_data_for_strategy(verbose=False)
         else:
             self.data = datagen
-        self._df = self.data()
+        self.df = self.data()
 
     def _generate_walkforward(self):
-        self.wf = WFTrainTestGenerator(df=df, **self.walkforward_parameters)
+        self.wf = WFTrainTestGenerator(df=self.df, **self.walkforward_parameters)
 
     def _generate_scaler(self):
         scaling_factory = ScalingFactory()
