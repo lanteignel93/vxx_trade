@@ -150,8 +150,11 @@ class Backtester(BacktesterConfig):
             train = self.winsorization.fit_transform(train, self.features)
             test = self.winsorization.transform(test, self.features)
 
+            # NOTE: Add Imputing 
             train = self.scaler.fit_transform(train, self.features)
             test = self.scaler.transform(test, self.features)
+
+            # NOTE: Add PCA Here 
 
             self.cluster.fit(train, self.features)
             train = self.cluster.predict(train, self.features)
@@ -162,6 +165,7 @@ class Backtester(BacktesterConfig):
 
             train = self.target_ranker.fit_transform(train)
             test = self.target_ranker.transform(test)
+
 
             self.classifier.fit(train, self.features, "target_rank")
             train = self.classifier.predict(train, self.features)

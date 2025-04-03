@@ -82,7 +82,7 @@ class KMeansClustering(ClusteringAlgorithm):
         super().__init__(n_clusters, "KMeansCluster")
         self._model = KMeans(n_clusters=n_clusters, random_state=random_state)
 
-
+#FIXME: Currently Depreciated, cannot use on OOS. 
 class HierarchicalClustering(ClusteringAlgorithm):
     def __init__(self, n_clusters: int):
         super().__init__(n_clusters, "HierarchicalCluster")
