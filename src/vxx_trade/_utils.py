@@ -1,5 +1,6 @@
 from typing import NamedTuple
 from enum import Enum
+import polars as pl
 
 
 class MatplotlibFigSize(NamedTuple):
@@ -20,6 +21,23 @@ class YearsResearch(NamedTuple):
 class TargetColumn(NamedTuple):
     name: str
     return_type: str
+
+class FeatureUpdate(NamedTuple):
+    original_features : list[str]
+    new_features: list[str]
+
+
+def update_dataframe(df: pl.DataFrame, feature_update: FeatureUpdate) -> pl.DataFrame:
+    return df.drop(feature_update.original_features)
+
+def update_feature_list(list_features: list[str], feature_update: FeatureUpdate) -> list[str]:
+    return list(
+        set(list_features)
+        .symmetric_difference(
+            set(feature_update.original_features)
+            .union(set(feature_update.new_features))
+        )
+    )
 
 
 class CustomEnum(Enum):

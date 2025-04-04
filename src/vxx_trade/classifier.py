@@ -35,7 +35,7 @@ class ClassifierModel(ABC):
         return self._model
 
     @model.setter
-    def model(self, model: ClassifierType) -> ClassifierType:
+    def model(self, model: ClassifierType):
         self._model = model
 
     def fit(self, df: pl.DataFrame, features: list[str], target: str) -> None:
