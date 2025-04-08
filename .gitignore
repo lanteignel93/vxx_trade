@@ -169,6 +169,7 @@ cython_debug/
 .png 
 .jpeg 
 .jpg 
+.git
 
 # Vim 
 .session.vim
