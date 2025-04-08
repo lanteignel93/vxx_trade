@@ -35,13 +35,15 @@ The goal of this project is yet to be fully defined. I'm using this project for 
 
 TODO: Explain the different python scripts under vxx_trade/
 
-### Prerequisites
+
+# Package Maintenance 
+## Prerequisites
 
 Python >= 3.10.12
 
-### Installation
+## Installation
 
-Ideally installing this on linux would be better, this was only tested on linux. 
+Ideally installing this on linux would be better, this was only tested on linux Ubuntu (22.04). 
 
 1. `cd <source folder>` # should see the project structure as mention above when doing `ls` command. 
 2. Create Python venv
