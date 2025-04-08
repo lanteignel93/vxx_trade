@@ -164,3 +164,9 @@ cython_debug/
 # Data 
 .csv
 .parquet
+
+# Images 
+.png 
+.jpeg 
+.jpg 
+
