@@ -1,8 +1,17 @@
 # About The Project
 
-The goal of this project is yet to be fully defined. I'm using this project for the following  
+The goal of this project is yet to be fully defined. I'm using this project for the following mean reasons 
 
-
+* Software engineering practice 
+   * Packaging a Python Project 
+   * Building Modular OOP Trading System 
+   * Investigating and learning best practices 
+   * Learning design patterns 
+* Trading 
+   * Building a research platform 
+   * Learning data techniques 
+   * Build a backtest 
+   * Optimizing trading strategy position under risk constraints 
 
 # Getting Started
 
