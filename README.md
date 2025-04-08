@@ -8,12 +8,12 @@ The goal of this project is yet to be fully defined. I'm using this project for 
 
 ## Project Structure 
 
-├── build                   # Compiled files   
+├── build                   &emsp; &emsp; &emsp;# Compiled files   
 ├── docs                    # Documentation files    
 ├── src                     # Source files    
 ├── tests                   # Automated tests (empty)   
 ├── logs                    # Logs of the project    
-├── LICENSE
+├── LICENSE    
 ├── NOTES.md                # Personal Notes related to some cases with examples   
 ├── .gitignore              # List of files to be ignored    
 ├── .pre-commit-config.yaml # Set of configs to manage the commits of the project, mostly formatting    
