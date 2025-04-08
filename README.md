@@ -8,18 +8,18 @@ The goal of this project is yet to be fully defined. I'm using this project for 
 
 ## Project Structure 
 
-├── build                   &emsp; &emsp; &emsp;# Compiled files   
-├── docs                    # Documentation files    
-├── src                     # Source files    
-├── tests                   # Automated tests (empty)   
-├── logs                    # Logs of the project    
+├── build                   &emsp; &emsp; &emsp;&emsp; &emsp; &emsp;&emsp; &emsp; &emsp;# Compiled files   
+├── docs                    &emsp; &emsp; &emsp;&emsp; &emsp; &emsp;&emsp; &emsp; &emsp;# Documentation files    
+├── src                     &emsp; &emsp; &emsp;&emsp; &emsp; &emsp;&emsp; &emsp; &emsp;# Source files    
+├── tests                   &emsp; &emsp; &emsp;&emsp; &emsp; &emsp;&emsp; &emsp; &emsp;# Automated tests (empty)   
+├── logs                    &emsp; &emsp; &emsp;&emsp; &emsp; &emsp;&emsp; &emsp; &emsp;# Logs of the project    
 ├── LICENSE    
-├── NOTES.md                # Personal Notes related to some cases with examples   
-├── .gitignore              # List of files to be ignored    
-├── .pre-commit-config.yaml # Set of configs to manage the commits of the project, mostly formatting    
-├── requirements.txt        # List of libraries versions of the latest stable built    
-├── pyproject.toml          # Instructions for pip to install the dependencies and general packaging    
-└── README.md               # This document      
+├── NOTES.md                &emsp; &emsp; &emsp;&emsp; &emsp; &emsp;&emsp; &emsp; &emsp;# Personal Notes related to some cases with examples   
+├── .gitignore              &emsp; &emsp; &emsp;&emsp; &emsp; &emsp;&emsp; &emsp; &emsp;# List of files to be ignored    
+├── .pre-commit-config.yaml &emsp; &emsp; &emsp;&emsp; &emsp; &emsp;&emsp; &emsp; &emsp;# Set of configs to manage the commits of the project, mostly formatting    
+├── requirements.txt        &emsp; &emsp; &emsp;&emsp; &emsp; &emsp;&emsp; &emsp; &emsp;# List of libraries versions of the latest stable built    
+├── pyproject.toml          &emsp; &emsp; &emsp;&emsp; &emsp; &emsp;&emsp; &emsp; &emsp;# Instructions for pip to install the dependencies and general packaging    
+└── README.md               &emsp; &emsp; &emsp;&emsp; &emsp; &emsp;&emsp; &emsp; &emsp;# This document      
 
 
 ## Code Structure under src/vxx_trade
