@@ -16,9 +16,9 @@ The goal of this project is yet to be fully defined. I'm using this project for 
 ├── LICENSE
 ├── NOTES.md                &emsp; &emsp; &emsp; # Personal Notes related to some cases with examples   
 ├── .gitignore              &emsp; &emsp; &emsp; # List of files to be ignored    
-├── .pre-commit-config.yaml &emsp; &emsp; &emsp; # Set of configs to manage the commits of the project, mostly formatting    
+├── .pre-commit-config.yaml &emsp; &emsp; &emsp; # Configs to manage the commits        
 ├── requirements.txt        &emsp; &emsp; &emsp; # List of libraries versions of the latest stable built    
-├── pyproject.toml          &emsp; &emsp; &emsp; # Instructions for pip to install the dependencies and general packaging
+├── pyproject.toml          &emsp; &emsp; &emsp; # Instructions for pip to install the dependencies and general packaging    
 └── README.md               &emsp; &emsp; &emsp; # This document 
 
 
