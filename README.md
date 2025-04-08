@@ -13,7 +13,7 @@ The goal of this project is yet to be fully defined. I'm using this project for 
 ├── src                     &emsp; &emsp; &emsp; # Source files    
 ├── tests                   &emsp; &emsp; &emsp; # Automated tests (empty)   
 ├── logs                    &emsp; &emsp; &emsp; # Logs of the project    
-├── LICENSE
+├── LICENSE    
 ├── NOTES.md                &emsp; &emsp; &emsp; # Personal Notes related to some cases with examples   
 ├── .gitignore              &emsp; &emsp; &emsp; # List of files to be ignored    
 ├── .pre-commit-config.yaml &emsp; &emsp; &emsp; # Configs to manage the commits        
